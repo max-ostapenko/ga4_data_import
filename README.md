@@ -7,7 +7,7 @@ Automating data uploads from external sources to GA4
 ### Architecture diagram
 
 <!-- markdownlint-disable-next-line MD033 -->
-![alt text](static/Google Analytics 4 Data Import pipeline.png)
+![diagram](https://raw.githubusercontent.com/max-ostapenko/ga4_data_import/init-release/static/Google%20Analytics%204%20Data%20Import%20pipeline.png)
 
 ### Get started
 
