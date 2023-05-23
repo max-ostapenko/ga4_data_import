@@ -12,7 +12,7 @@
 		"ghcr.io/devcontainers-contrib/features/mypy:2": {},
 		"ghcr.io/devcontainers-contrib/features/pylint:2": {},
 		"ghcr.io/dhoeric/features/google-cloud-cli:1": {}
-	}
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
