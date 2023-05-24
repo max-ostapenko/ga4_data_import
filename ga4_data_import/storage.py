@@ -1,3 +1,4 @@
+# This file contains functions for interacting with Google Cloud Storage.
 from google.cloud import storage
 from ga4_data_import.common import get_project_number
 

@@ -1,4 +1,4 @@
-"""Common functions for the GA4 Data Import API code samples."""
+# Common functions for the GA4 Data Import API code samples.
 
 from google.cloud.resourcemanager_v3 import (
     ProjectsClient,

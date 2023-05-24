@@ -1,4 +1,5 @@
-# @title Some code here
+# This file contains functions for creating a Compute Engine instance and static address.
+
 from google.cloud.compute_v1.services.instances.client import InstancesClient
 from google.cloud.compute_v1.services.addresses.client import AddressesClient
 from google.cloud.compute_v1.types import (
@@ -9,15 +10,18 @@ from google.cloud.compute_v1.types import (
     InsertAddressRequest,
     InsertInstanceRequest,
     Instance,
+    Items,
     GetAddressRequest,
+    Metadata,
     NetworkInterface,
     Scheduling,
     ServiceAccount,
     ShieldedInstanceConfig,
+    ShieldedInstanceIntegrityPolicy,
     SetMetadataInstanceRequest,
     Tags,
 )
-from ga4_data_import.common import get_region_from_zone
+from ga4_data_import.common import get_region_from_zone, get_project_number
 
 
 def create_static_address(project_id, zone, instance_name):
@@ -31,22 +35,26 @@ def create_static_address(project_id, zone, instance_name):
         str, The static address.
     """
     region = get_region_from_zone(zone)
-
     address_name = f"{instance_name}-static"
-    address_request = InsertAddressRequest(
-        project=project_id,
-        region=region,
-        address_resource=Address(name=address_name, network_tier="STANDARD"),
-    )
-
-    # Create the static address
-    AddressesClient().insert(address_request).result()
     address_request = GetAddressRequest(
         project=project_id, region=region, address=address_name
     )
-    address_response = AddressesClient().get(address_request)
+    address_client = AddressesClient()
 
-    return address_response.get("address")
+    try:
+        # Check if the address already exists
+        existing_address_response = address_client.get(address_request)
+        return existing_address_response.get("address")
+    except:
+        # Address does not exist, create a new one
+        insert_address_request = InsertAddressRequest(
+            project=project_id,
+            region=region,
+            address_resource=Address(name=address_name, network_tier="STANDARD"),
+        )
+        address_client.insert(insert_address_request).result()
+        new_address_response = address_client.get(address_request)
+        return new_address_response.get("address")
 
 
 def create_instance(
@@ -68,16 +76,16 @@ def create_instance(
         auto_delete=True,
         boot=True,
         initialize_params=AttachedDiskInitializeParams(
-            disk_name=f"{instance_name}-disk0",
             disk_size_gb=10,
             source_image="projects/debian-cloud/global/images/debian-11-bullseye-v20230509",
-            disk_type=f"projects/{project_id}/zones/{zone}/diskTypes/pd-standard",
+            disk_type=f"projects/{project_id}/zones/{zone}/diskTypes/pd-balanced",
         ),
     )
+    project_number = get_project_number(project_id)
     metadata = [
-        (
-            "startup-script",
-            f"""#!/bin/bash
+        Items(
+            key="startup-script",
+            value=f"""#!/bin/bash
 
 sftp_username={sftp_username}
 bucket_name={bucket_name}
@@ -119,24 +127,20 @@ systemctl restart ssh
 
 # Mount bucket
 sudo -u $sftp_username mkdir /home/$sftp_username/sftp
-sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""".replace(
-                "\n", "\\n"
-            ),
+sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""",
         )
     ]
     network_interface = NetworkInterface(
         name=f"{instance_name}-nic0",
         access_configs=[
             AccessConfig(
-                name="external-nat",
-                type_="ONE_TO_ONE_NAT",
                 nat_i_p=static_address,
                 network_tier="STANDARD",
             )
         ],
     )
     service_account = ServiceAccount(
-        email=f"{project_id}-compute@developer.gserviceaccount.com",
+        email=f"{project_number}-compute@developer.gserviceaccount.com",
         scopes=[
             "https://www.googleapis.com/auth/devstorage.read_only",
             "https://www.googleapis.com/auth/logging.write",
@@ -152,14 +156,14 @@ sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""".replace
         instance_resource=Instance(
             disks=[disk],
             machine_type=f"projects/{project_id}/zones/{zone}/machineTypes/f1-micro",
-            metadata=metadata,
             name=instance_name,
             network_interfaces=[network_interface],
+            metadata=Metadata(items=metadata),
             scheduling=Scheduling(
                 automatic_restart=True,
                 on_host_maintenance="MIGRATE",
                 preemptible=False,
-                provisioning_model="SPOT",
+                provisioning_model="STANDARD",
             ),
             service_accounts=[service_account],
             shielded_instance_config=ShieldedInstanceConfig(
@@ -168,13 +172,16 @@ sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""".replace
                 enable_integrity_monitoring=True,
             ),
             tags=Tags(items=["default-allow-ssh"]),
+            shielded_instance_integrity_policy=ShieldedInstanceIntegrityPolicy(
+                update_auto_learn_policy=True
+            ),
+            ignore_unknown_fields=True,
         ),
+        ignore_unknown_fields=True,
     )
 
     # Create the instance
-    InstancesClient().insert(
-        request=insert_instance_request, metadata=metadata
-    ).result()
+    InstancesClient().insert(request=insert_instance_request).result()
 
 
 def add_shh_pub_key(project_id, zone, instance_name, sftp_username, key):
