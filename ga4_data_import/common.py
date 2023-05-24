@@ -1,3 +1,5 @@
+"""Common functions for the GA4 Data Import API code samples."""
+
 from google.cloud import resourcemanager_v3
 from google.cloud import compute_v1
 
@@ -5,8 +7,11 @@ from google.cloud import compute_v1
 def get_project_number(project_id):
     """
     Get the project number from the project id.
-    :param project_id: The project id.
-    :return: The project number.
+
+    Args:
+        project_id: The project id to get the project number from.
+    Returns:
+        str, The project number.
     """
     client = resourcemanager_v3.ProjectsClient()
     request = resourcemanager_v3.SearchProjectsRequest(query=f"id:{project_id}")
@@ -19,9 +24,16 @@ def get_project_number(project_id):
 
 
 def get_region_from_zone(zone):
+    """
+    Get the region from the zone.
+
+    Args:
+        zone: The zone to get the region from.
+    Returns:
+        str, The region.
+    """
     parts = zone.split("-")
-    region = "-".join(parts[:-1])
-    return region
+    return "-".join(parts[:-1])
 
 
 def wait_for_operation(
@@ -51,3 +63,8 @@ def wait_for_operation(
     else:
         client = compute_v1.GlobalOperationsClient()
     return client.wait(**kwargs)
+
+
+def read_pub_key(pub_key_path):
+    with open(pub_key_path, 'r') as file:
+        return ' '.join(file.read().strip().split(' ')[0:2])
