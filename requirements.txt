@@ -1,3 +1,4 @@
-google-cloud-resource-manager
-google-cloud-compute
 ipython
+google-cloud-compute
+google-cloud-resource-manager
+google-cloud-storage
