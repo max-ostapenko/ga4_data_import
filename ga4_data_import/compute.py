@@ -7,23 +7,26 @@ from google.cloud.compute_v1.types import (
     AttachedDisk,
     AttachedDiskInitializeParams,
     InsertAddressRequest,
+    InsertInstanceRequest,
+    Instance,
     GetAddressRequest,
     NetworkInterface,
-    SetMetadataInstanceRequest,
-    ShieldedInstanceConfig,
     Scheduling,
+    ServiceAccount,
+    ShieldedInstanceConfig,
+    SetMetadataInstanceRequest,
     Tags,
 )
 from ga4_data_import.common import get_region_from_zone
 
 
-def create_static_address(instance_name, project_id, zone):
+def create_static_address(project_id, zone, instance_name):
     """
     Create a static address with the provided name, project id, and region.
     Args:
-        instance_name: The name of the instance.
         project_id: The project id.
         zone: The zone to create the static address in.
+        instance_name: The name of the instance.
     Returns:
         str, The static address.
     """
@@ -46,43 +49,21 @@ def create_static_address(instance_name, project_id, zone):
     return address_response.get("address")
 
 
-def create_instance(instance_name, project_id, zone, sftp_username, bucket_name):
+def create_instance(
+    instance_name, project_id, zone, static_address, sftp_username, bucket_name
+):
     """
     Create a Compute Engine instance with the provided name, project id, zone, and bucket name.
     Args:
         instance_name: The name of the instance.
         project_id: The project id.
         zone: The zone to create the instance in.
+        static_address: The static address to assign to the instance.
         sftp_username: The username to create on the instance.
         bucket_name: The name of the bucket to mount on the instance.
-    Returns:
-        str, The static address.
     """
-    region = get_region_from_zone(zone)
-    static_address = (
-        "35.208.180.229"  # create_static_address(instance_name, project_id, zone)
-    )
 
     # Create the instance request
-    network_interface = NetworkInterface(
-        name=f"{instance_name}-nic0",
-        access_configs=[
-            AccessConfig(
-                name="external-nat",
-                type_="ONE_TO_ONE_NAT",
-                nat_i_p=static_address,
-                network_tier="STANDARD",
-            )
-        ],
-    )
-    scopes = [
-        "https://www.googleapis.com/auth/devstorage.read_only",
-        "https://www.googleapis.com/auth/logging.write",
-        "https://www.googleapis.com/auth/monitoring.write",
-        "https://www.googleapis.com/auth/servicecontrol",
-        "https://www.googleapis.com/auth/service.management.readonly",
-        "https://www.googleapis.com/auth/trace.append",
-    ]
     disk = AttachedDisk(
         auto_delete=True,
         boot=True,
@@ -93,34 +74,6 @@ def create_instance(instance_name, project_id, zone, sftp_username, bucket_name)
             disk_type=f"projects/{project_id}/zones/{zone}/diskTypes/pd-standard",
         ),
     )
-    insert_instance_request = {
-        "project": project_id,
-        "zone": zone,
-        "instance_resource": {
-            "name": instance_name,
-            "machine_type": f"projects/{project_id}/zones/{zone}/machineTypes/f1-micro",
-            "network_interfaces": [network_interface],
-            "service_accounts": [
-                {
-                    "email": f"{project_id}-compute@developer.gserviceaccount.com",
-                    "scopes": scopes,
-                }
-            ],
-            "tags": Tags(items=["default-allow-ssh"]),
-            "disks": [disk],
-            "shielded_instance_config": ShieldedInstanceConfig(
-                enable_secure_boot=False,
-                enable_vtpm=True,
-                enable_integrity_monitoring=True,
-            ),
-            "scheduling": Scheduling(
-                automatic_restart=True,
-                on_host_maintenance="MIGRATE",
-                preemptible=False,
-            ),
-        },
-    }
-
     metadata = [
         (
             "startup-script",
@@ -171,13 +124,57 @@ sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""".replace
             ),
         )
     ]
+    network_interface = NetworkInterface(
+        name=f"{instance_name}-nic0",
+        access_configs=[
+            AccessConfig(
+                name="external-nat",
+                type_="ONE_TO_ONE_NAT",
+                nat_i_p=static_address,
+                network_tier="STANDARD",
+            )
+        ],
+    )
+    service_account = ServiceAccount(
+        email=f"{project_id}-compute@developer.gserviceaccount.com",
+        scopes=[
+            "https://www.googleapis.com/auth/devstorage.read_only",
+            "https://www.googleapis.com/auth/logging.write",
+            "https://www.googleapis.com/auth/monitoring.write",
+            "https://www.googleapis.com/auth/servicecontrol",
+            "https://www.googleapis.com/auth/service.management.readonly",
+            "https://www.googleapis.com/auth/trace.append",
+        ],
+    )
+    insert_instance_request = InsertInstanceRequest(
+        project=project_id,
+        zone=zone,
+        instance_resource=Instance(
+            disks=[disk],
+            machine_type=f"projects/{project_id}/zones/{zone}/machineTypes/f1-micro",
+            metadata=metadata,
+            name=instance_name,
+            network_interfaces=[network_interface],
+            scheduling=Scheduling(
+                automatic_restart=True,
+                on_host_maintenance="MIGRATE",
+                preemptible=False,
+                provisioning_model="SPOT",
+            ),
+            service_accounts=[service_account],
+            shielded_instance_config=ShieldedInstanceConfig(
+                enable_secure_boot=False,
+                enable_vtpm=True,
+                enable_integrity_monitoring=True,
+            ),
+            tags=Tags(items=["default-allow-ssh"]),
+        ),
+    )
 
     # Create the instance
     InstancesClient().insert(
         request=insert_instance_request, metadata=metadata
     ).result()
-
-    return static_address
 
 
 def add_shh_pub_key(project_id, zone, instance_name, sftp_username, key):
