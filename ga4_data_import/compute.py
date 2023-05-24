@@ -21,7 +21,10 @@ from google.cloud.compute_v1.types import (
     SetMetadataInstanceRequest,
     Tags,
 )
-from ga4_data_import.common import get_region_from_zone, get_project_number
+from ga4_data_import.common import (
+    get_region_from_zone,
+    get_project_number,
+)
 
 
 def create_static_address(project_id, zone, instance_name):
@@ -197,46 +200,46 @@ def add_shh_pub_key(project_id, zone, instance_name, sftp_username, key):
     Returns:
         None
     """
-
-    instance_response = InstancesClient().get(
+    instance_client = InstancesClient()
+    instance_response = instance_client.get(
         project=project_id, zone=zone, instance=instance_name
     )
-    metadata = instance_response.get("metadata")
-    instance_path = instance_response.get("selfLink")
-    ssh_keys = metadata.get("ssh-keys")
 
-    # metadata = json.loads(subprocess.check_output(instance_describe_cmd, shell=True))
+    existing_ssh_keys = ""
+    for item in instance_response.metadata.items:
+        if item.key == "ssh-keys":
+            existing_ssh_keys = item.value
+            break
 
-    new_key = f"{sftp_username}:{key}".strip()
-    existing_keys = []
+    new_key = sftp_username.strip() + ":" + key.strip()
     need_append = True
-    if ssh_keys:
-        existing_keys = ssh_keys.split("\n")
-        for key in existing_keys:
-            # Process each SSH key as needed
-            print(key)
-            existing_keys.append(key.strip())
-            if new_key == key:
+    if existing_ssh_keys:
+        existing_ssh_keys = existing_ssh_keys.split("\n")
+        keys = []
+        for key in existing_ssh_keys:
+            keys.append(key.strip())
+            if new_key == key.strip():
                 need_append = False
                 break
-    # else:
-    # print('No SSH keys found in instance metadata.')
+        existing_ssh_keys = "\n".join(keys)
 
-    # Append the new public key to the VM SSH keys
-    if True:
-        print(
-            f"""Existing keys:
-{existing_keys}
-New key:
-{new_key}
-    """
-        )
-
-    # Update the instance metadata with the new SSH keys
+    # Update the instance metadata with the new SSH key
     if need_append:
         request = SetMetadataInstanceRequest(
-            instance=instance_path,
-            metadata={"ssh-keys": "\n".join(["\n".join(existing_keys), new_key])},
+            project=project_id,
+            zone=zone,
+            instance=instance_name,
+            metadata_resource=Metadata(
+                fingerprint=instance_response.metadata.fingerprint,
+                items=[
+                    Items(
+                        key="ssh-keys",
+                        value=(existing_ssh_keys + "\n" + new_key)
+                        if existing_ssh_keys
+                        else new_key,
+                    )
+                ],
+            ),
         )
 
-        InstancesClient().set_metadata(request)
+        InstancesClient().set_metadata(request).result()
