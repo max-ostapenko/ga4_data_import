@@ -1,6 +1,6 @@
 # @title Some code here
 from google.cloud import compute_v1
-from ga4_data_import.common import get_region_from_zone, wait_for_extended_operation
+from ga4_data_import.common import get_region_from_zone, wait_for_operation
 
 
 def create_static_address(instance_name, project_id, zone):
@@ -16,34 +16,28 @@ def create_static_address(instance_name, project_id, zone):
     compute_client = compute_v1.AddressesClient()
     region = get_region_from_zone(zone)
 
+    address_name = f"{instance_name}-static"
     # Prepare the request body
     address_request = compute_v1.InsertAddressRequest(
         project=project_id,
         region=region,
-        address_resource=compute_v1.Address(
-            name=f"{instance_name}-static",
-            network_tier="STANDARD"
-        )
+        address_resource=compute_v1.Address(name=address_name, network_tier="STANDARD"),
     )
 
     # Create the static address
     operation = compute_client.insert(address_request)
-    response = wait_for_extended_operation(
-        operation
+    wait_for_operation(operation, project_id)
+
+    address_request = compute_v1.GetAddressRequest(
+        project=project_id, region=region, address=address_name
     )
+    address_response = compute_client.get(address_request)
+    print(address_response)
 
-    print(response.name)
-
-    return response.name
+    return address_response.address
 
 
-def create_instance(
-    instance_name,
-    project_id,
-    zone,
-    sftp_username,
-    bucket_name
-):
+def create_instance(instance_name, project_id, zone, sftp_username, bucket_name):
     """
     Create a Compute Engine instance with the provided name, project id, zone, and bucket name.
     Args:
@@ -60,21 +54,61 @@ def create_instance(
 
     client = compute_v1.InstancesClient()
 
-    network_interface = f'name={instance_name}-nic0,address={static_address}' + \
-        'network-tier=STANDARD,subnet=default,'
+    # Create the instance request
+    network_interface = (
+        f"name={instance_name}-nic0,address={static_address}"
+        + "network-tier=STANDARD,subnet=default,"
+    )
     scopes = [
-        'https://www.googleapis.com/auth/devstorage.read_only',
-        'https://www.googleapis.com/auth/logging.write',
-        'https://www.googleapis.com/auth/monitoring.write',
-        'https://www.googleapis.com/auth/servicecontrol',
-        'https://www.googleapis.com/auth/service.management.readonly',
-        'https://www.googleapis.com/auth/trace.append'
+        "https://www.googleapis.com/auth/devstorage.read_only",
+        "https://www.googleapis.com/auth/logging.write",
+        "https://www.googleapis.com/auth/monitoring.write",
+        "https://www.googleapis.com/auth/servicecontrol",
+        "https://www.googleapis.com/auth/service.management.readonly",
+        "https://www.googleapis.com/auth/trace.append"
     ]
-    disk = 'auto-delete=yes,boot=yes,' + \
-        'image=projects/debian-cloud/global/images/debian-11-bullseye-v20230509,' + \
-        'mode=rw,size=10,' + \
-        f'type=projects/{project_id}/zones/us-central1-a/diskTypes/pd-balanced'
-    metadata = {'startup-script': f"""
+    disk = (
+        "auto-delete=yes,boot=yes,"
+        + "image=projects/debian-cloud/global/images/debian-11-bullseye-v20230509,"
+        + "mode=rw,size=10,"
+        + f"type=projects/{project_id}/zones/us-central1-a/diskTypes/pd-balanced"
+    )
+    request = {
+        "project": project_id,
+        "zone": zone,
+        "instance_resource":{
+            "name": instance_name,
+            "machine_type": f"projects/{project_id}/zones/{zone}/machineTypes/f1-micro",
+            "network_interfaces": [network_interface],
+            "service_accounts": [
+                {
+                    "email": f"{project_id}-compute@developer.gserviceaccount.com",
+                    "scopes": scopes
+                }
+            ],
+            "tags": {"items": ["default-allow-ssh"]},
+            "disks": [
+                {
+                    "initialize_params": {"source_image": disk},
+                    "boot": True,
+                    "auto_delete": True
+                }
+            ],
+            "shielded_instance_config": {
+                "enable_secure_boot": False,
+                "enable_vtpm": True,
+                "enable_integrity_monitoring": True
+            },
+            "scheduling": {
+                "on_host_maintenance": "MIGRATE",
+                "automatic_restart": True,
+                "preemptible": False
+            }
+        }
+    }
+
+    metadata = {
+        "startup-script": f"""
 #!/bin/bash
 
 sftp_username={sftp_username}
@@ -118,59 +152,19 @@ systemctl restart ssh
 
 # Mount bucket
 sudo -u $sftp_username mkdir /home/$sftp_username/sftp
-sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp"""}
-
-    # Create the instance request
-    request = {
-        'project': project_id,
-        'zone': zone,
-        'instanceResource': {
-            'name': instance_name,
-            'machineType': f'projects/{project_id}/zones/{zone}/machineTypes/f1-micro',
-            'networkInterfaces': [network_interface],
-            'serviceAccounts': [{
-                'email': f'{project_id}-compute@developer.gserviceaccount.com',
-                'scopes': scopes
-            }],
-            'tags': {'items': ['default-allow-ssh']},
-            'disks': [{
-                'initializeParams': {
-                    'sourceImage': disk
-                },
-                'boot': True,
-                'autoDelete': True
-            }],
-            'shieldedInstanceConfig': {
-                'enableSecureBoot': False,
-                'enableVtpm': True,
-                'enableIntegrityMonitoring': True
-            },
-            'scheduling': {
-                'onHostMaintenance': 'MIGRATE',
-                'automaticRestart': True,
-                'preemptible': False,
-                'reservationAffinity': 'any'
-            },
-            'metadata': metadata
-        }
+sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp"""
     }
 
     # Create the instance
-    operation = client.insert(project=project_id, zone=zone, instance_resource=request)
+    operation = client.insert(request=request, metadata=metadata)
 
     # Wait for the operation to complete
-    wait_for_extended_operation(operation, "instance creation")
+    wait_for_operation(operation, project_id)
 
     return static_address
 
 
-def add_shh_pub_key(
-        project_id,
-        zone,
-        instance_name,
-        sftp_username,
-        key
-):
+def add_shh_pub_key(project_id, zone, instance_name, sftp_username, key):
     """
     Add the provided SSH public key to the instance metadata.
 
@@ -186,9 +180,9 @@ def add_shh_pub_key(
     # Get the existing SSH keys from current instance metadata
     client = compute_v1.ComputeClient()
     instance = client.instance(project_id, zone, instance_name).execute()
-    metadata = instance.get('metadata')
-    instance_path = instance.get('selfLink')
-    ssh_keys = metadata.get('ssh-keys')
+    metadata = instance.get("metadata")
+    instance_path = instance.get("selfLink")
+    ssh_keys = metadata.get("ssh-keys")
 
     # metadata = json.loads(subprocess.check_output(instance_describe_cmd, shell=True))
 
@@ -196,7 +190,7 @@ def add_shh_pub_key(
     existing_keys = []
     need_append = True
     if ssh_keys:
-        existing_keys = ssh_keys.split('\n')
+        existing_keys = ssh_keys.split("\n")
         for key in existing_keys:
             # Process each SSH key as needed
             print(key)
@@ -205,25 +199,24 @@ def add_shh_pub_key(
                 need_append = False
                 break
     # else:
-        # print('No SSH keys found in instance metadata.')
+    # print('No SSH keys found in instance metadata.')
 
     # Append the new public key to the VM SSH keys
     if True:
-        print(f"""Existing keys:
+        print(
+            f"""Existing keys:
 {existing_keys}
 New key:
 {new_key}
-    """)
+    """
+        )
 
     # Update the instance metadata with the new SSH keys
     if need_append:
-        metadata = {
-            'ssh-keys': '\n'.join(['\n'.join(existing_keys), new_key])
-        }
+        metadata = {"ssh-keys": "\n".join(["\n".join(existing_keys), new_key])}
 
         request = compute_v1.AddMetadataItemsRequest(
-            instance=instance_path,
-            metadata=metadata
+            instance=instance_path, metadata=metadata
         )
 
         client.add_metadata(request)

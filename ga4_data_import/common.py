@@ -9,66 +9,45 @@ def get_project_number(project_id):
     :return: The project number.
     """
     client = resourcemanager_v3.ProjectsClient()
-    request = resourcemanager_v3.SearchProjectsRequest(
-        query=f'id:{project_id}'
-    )
+    request = resourcemanager_v3.SearchProjectsRequest(query=f"id:{project_id}")
     response = client.search_projects(request=request)
     page_result = client.search_projects(request=request)
     for response in page_result:
         if response.project_id == project_id:
             project = response.name
-            return project.replace('projects/', '')
+            return project.replace("projects/", "")
 
 
 def get_region_from_zone(zone):
-    parts = zone.split('-')
-    region = '-'.join(parts[:-1])
+    parts = zone.split("-")
+    region = "-".join(parts[:-1])
     return region
 
 
-def wait_for_extended_operation(
-    operation: ExtendedOperation, verbose_name: str = "operation", timeout: int = 300
-) -> Any:
+def wait_for_operation(
+    operation: compute_v1.Operation, project_id: str
+) -> compute_v1.Operation:
     """
-    Waits for the extended (long-running) operation to complete.
-
-    If the operation is successful, it will return its result.
-    If the operation ends with an error, an exception will be raised.
-    If there were any warnings during the execution of the operation
-    they will be printed to sys.stderr.
+    This method waits for an operation to be completed. Calling this function
+    will block until the operation is finished.
 
     Args:
-        operation: a long-running operation you want to wait on.
-        verbose_name: (optional) a more verbose name of the operation,
-            used only during error and warning reporting.
-        timeout: how long (in seconds) to wait for operation to finish.
-            If None, wait indefinitely.
+        operation: The Operation object representing the operation you want to
+            wait on.
+        project_id: project ID or project number of the Cloud project you want to use.
 
     Returns:
-        Whatever the operation.result() returns.
-
-    Raises:
-        This method will raise the exception received from `operation.exception()`
-        or RuntimeError if there is no exception set, but there is an `error_code`
-        set for the `operation`.
-
-        In case of an operation taking longer than `timeout` seconds to complete,
-        a `concurrent.futures.TimeoutError` will be raised.
+        Finished Operation object.
     """
-    result = operation.result(timeout=timeout)
-
-    if operation.error_code:
-        print(
-            f"Error during {verbose_name}: [Code: {operation.error_code}]: {operation.error_message}",
-            file=sys.stderr,
-            flush=True,
-        )
-        print(f"Operation ID: {operation.name}", file=sys.stderr, flush=True)
-        raise operation.exception() or RuntimeError(operation.error_message)
-
-    if operation.warnings:
-        print(f"Warnings during {verbose_name}:\n", file=sys.stderr, flush=True)
-        for warning in operation.warnings:
-            print(f" - {warning.code}: {warning.message}", file=sys.stderr, flush=True)
-
-    return result
+    kwargs = {"project": project_id, "operation": operation.name}
+    if operation.zone:
+        client = compute_v1.ZoneOperationsClient()
+        # Operation.zone is a full URL address of a zone, so we need to extract just the name
+        kwargs["zone"] = operation.zone.rsplit("/", maxsplit=1)[1]
+    elif operation.region:
+        client = compute_v1.RegionOperationsClient()
+        # Operation.region is a full URL address of a region, so we need to extract just the name
+        kwargs["region"] = operation.region.rsplit("/", maxsplit=1)[1]
+    else:
+        client = compute_v1.GlobalOperationsClient()
+    return client.wait(**kwargs)
