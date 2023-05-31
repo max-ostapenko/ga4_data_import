@@ -1,0 +1,64 @@
+[project]
+name = "ga4_data_import"
+version = "0.1.0"
+description = "Google Analytics 4 Data Import code samples"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+keywords = [
+    "Google Analytics 4",
+    "Data Import",
+    "SFTP"
+]
+
+authors = [
+    {name = "Max Ostapenko", email = "ga4_data_import@maxostapenko.com" }
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+
+    "Topic :: Internet :: File Transfer Protocol (FTP)",
+    "Topic :: Utilities"
+]
+
+# For an analysis of this field vs pip's requirements files see:
+# https://packaging.python.org/discussions/install-requires-vs-requirements/
+dependencies = [ # Optional
+    "google-cloud-compute",
+    "google-cloud-resource-manager",
+    "google-cloud-storage"
+]
+
+[project.optional-dependencies]
+dev = [
+    "check-manifest",
+    "build",
+    "twine"
+    ]
+test = [
+    "coverage"
+    ]
+
+[project.urls]
+"Homepage" = "https://www.maxostapenko.com/projects/ga4_data_import"
+"Bug Reports" = "https://github.com/max-ostapenko/ga4_data_import/issues"
+"Funding" = "https://maxostapenko.com/donate"
+"Say Thanks!" = "https://www.maxostapenko.com/sponsor"
+"Source" = "https://github.com/max-ostapenko/ga4_data_import/"
+
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["ga4_data_import"]

@@ -1,0 +1,18 @@
+digraph G {
+    rankdir=LR;
+    node [shape=box, style="rounded, filled", fillcolor="#E8F0FE"];
+    label = "Data Import Pipeline";
+
+    subgraph clusterGCP {
+        label = "Google Cloud Platform (GCP)";
+
+        BigQuery [label="BigQuery"];
+        GCS [label="Google Cloud Storage (GCS)"];
+        SFTP_Gateway [label="SFTP Gateway"];
+        GA4 [label="Google Analytics 4 (GA4)"];
+
+        BigQuery -> GCS;
+        GCS -> SFTP_Gateway;
+        SFTP_Gateway -> GA4;
+    }
+}
