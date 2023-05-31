@@ -1,19 +1,18 @@
 # Google Analytics 4 Data Import
 
-Automating data uploads from external sources to GA4
+Automated data imports pipeline to GA4
 
-## Import source - SFTP
 
-### Architecture diagram
-
-<!-- markdownlint-disable-next-line MD033 -->
-![diagram](https://raw.githubusercontent.com/max-ostapenko/ga4_data_import/init-release/static/Google%20Analytics%204%20Data%20Import%20pipeline.png)
-
-### Get started
+## Import source - Google Cloud Storage (via SFTP)
 
 <!-- markdownlint-disable-next-line MD033 -->
-<a href="https://colab.research.google.com/github/max-ostapenko/ga4_data_import/blob/main/GA4_Data_Import_from_Google_Cloud_Storage.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+<a href="https://colab.research.google.com/github/max-ostapenko/ga4_data_import/blob/main/scripts/GCS_to_GA4.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
-## Development
+Google Colab is an easy to start thanks to its visual interface and Google-ready environment.
 
-Google Colab is used for operation due to notebook's visual interface and environment prepared for running code for Google services.
+Open it and follow the instructions to get a pipeline ready within a minute.
+
+### Architecture diagram:
+
+<!-- markdownlint-disable-next-line MD033 -->
+![diagram](https://raw.githubusercontent.com/max-ostapenko/ga4_data_import/main/static/GCS_to_GA4%20Data%20Import%20pipeline.png)

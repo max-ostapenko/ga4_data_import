@@ -1,14 +1,15 @@
 [project]
 name = "ga4_data_import"
-version = "0.1.0"
-description = "Google Analytics 4 Data Import code samples"
+version = "0.1.2"
+description = "Google Analytics 4 Data Import pipeline"
 readme = "README.md"
 requires-python = ">=3.7"
 license = {file = "LICENSE"}
 keywords = [
     "Google Analytics 4",
     "Data Import",
-    "SFTP"
+    "SFTP",
+    "Google Cloud Storage"
 ]
 
 authors = [
@@ -31,8 +32,6 @@ classifiers = [
     "Topic :: Utilities"
 ]
 
-# For an analysis of this field vs pip's requirements files see:
-# https://packaging.python.org/discussions/install-requires-vs-requirements/
 dependencies = [ # Optional
     "google-cloud-compute",
     "google-cloud-resource-manager",
@@ -52,8 +51,7 @@ test = [
 [project.urls]
 "Homepage" = "https://www.maxostapenko.com/projects/ga4_data_import"
 "Bug Reports" = "https://github.com/max-ostapenko/ga4_data_import/issues"
-"Funding" = "https://maxostapenko.com/donate"
-"Say Thanks!" = "https://www.maxostapenko.com/sponsor"
+"Funding" = "https://maxostapenko.com/sponsor"
 "Source" = "https://github.com/max-ostapenko/ga4_data_import/"
 
 [build-system]

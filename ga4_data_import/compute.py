@@ -47,7 +47,7 @@ def create_static_address(project_id, zone, instance_name):
     try:
         # Check if the address already exists
         existing_address_response = address_client.get(address_request)
-        return existing_address_response.get("address")
+        return existing_address_response.address
     except:
         # Address does not exist, create a new one
         insert_address_request = InsertAddressRequest(
@@ -57,7 +57,7 @@ def create_static_address(project_id, zone, instance_name):
         )
         address_client.insert(insert_address_request).result()
         new_address_response = address_client.get(address_request)
-        return new_address_response.get("address")
+        return new_address_response.address
 
 
 def create_instance(
