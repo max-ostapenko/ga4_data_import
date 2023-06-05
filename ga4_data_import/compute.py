@@ -22,22 +22,20 @@ from google.cloud.compute_v1.types import (
     Tags,
 )
 from ga4_data_import.common import (
-    get_region_from_zone,
     get_project_number,
 )
 
 
-def create_static_address(project_id, zone, instance_name):
+def create_static_address(project_id, region, instance_name):
     """
     Create a static address with the provided name, project id, and region.
     Args:
         project_id: The project id.
-        zone: The zone to create the static address in.
+        region: The region to create the address in.
         instance_name: The name of the instance.
     Returns:
         str, The static address.
     """
-    region = get_region_from_zone(zone)
     address_name = f"{instance_name}-static"
     address_request = GetAddressRequest(
         project=project_id, region=region, address=address_name
@@ -61,7 +59,13 @@ def create_static_address(project_id, zone, instance_name):
 
 
 def create_instance(
-    instance_name, project_id, zone, static_address, sftp_username, bucket_name
+    instance_name,
+    project_id,
+    zone,
+    static_address,
+    bucket_name,
+    sftp_username,
+    service_account_email = None,
 ):
     """
     Create a Compute Engine instance with the provided name, project id, zone, and bucket name.
@@ -84,55 +88,43 @@ def create_instance(
             disk_type=f"projects/{project_id}/zones/{zone}/diskTypes/pd-balanced",
         ),
     )
-    project_number = get_project_number(project_id)
+
     metadata = [
         Items(
             key="startup-script",
             value=f"""#!/bin/bash
-
-sftp_username={sftp_username}
-bucket_name={bucket_name}
-
-# Install SFTP server
-apt-get update -y
-apt-get install -y openssh-server
-
-# Install gcloud
-# https://cloud.google.com/sdk/docs/install#installation_instructions
-echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg
-apt-get update -y
-apt-get install google-cloud-sdk -y
-
 # Install gcsfuse
 # https://cloud.google.com/storage/docs/gcsfuse-quickstart-mount-bucket#install
 export GCSFUSE_REPO=gcsfuse-$(lsb_release -c -s)
 echo "deb https://packages.cloud.google.com/apt $GCSFUSE_REPO main" | sudo tee /etc/apt/sources.list.d/gcsfuse.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-sudo apt-get update -y
-sudo apt-get install -y fuse gcsfuse
+apt-get update -y
+apt-get install -y fuse gcsfuse
 rm -rf /var/lib/apt/lists/*
 
-# Create user
-adduser $sftp_username
-mkdir /home/$sftp_username
-chown root:root /home/sftp_user
+# Create SFTP user
+adduser {sftp_username}
+
+# Mount bucket
+sudo -u {sftp_username} mkdir /home/{sftp_username}/{bucket_name}_mounted
+sudo -u {sftp_username} gcsfuse -o ro --implicit-dirs --enable-storage-client-library {bucket_name} /home/{sftp_username}/{bucket_name}_mounted
+chown root:root /home/{sftp_username}
+
+# Configure SFTP server
 sed -i "s/^Subsystem\tsftp.*/Subsystem\tsftp internal-sftp/" /etc/ssh/sshd_config
 tee -a /etc/ssh/sshd_config << EOM
-Match User $sftp_username
-\tForceCommand internal-sftp -d /sftp
+Match User {sftp_username}
+\tForceCommand internal-sftp -d /{bucket_name}_mounted
 \tChrootDirectory /home/%u
 \tAllowTcpForwarding no
 \tX11Forwarding no
 \tPasswordAuthentication no
-\tAuthenticationMethods publickeyEOM
-systemctl restart ssh
-
-# Mount bucket
-sudo -u $sftp_username mkdir /home/$sftp_username/sftp
-sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""",
+\tAuthenticationMethods publickey
+EOM
+systemctl restart ssh""",
         )
     ]
+
     network_interface = NetworkInterface(
         name=f"{instance_name}-nic0",
         access_configs=[
@@ -142,8 +134,13 @@ sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""",
             )
         ],
     )
+
+
+    if not service_account_email:
+        project_number = get_project_number(project_id)
+        service_account_email = f"{project_number}-compute@developer.gserviceaccount.com"
     service_account = ServiceAccount(
-        email=f"{project_number}-compute@developer.gserviceaccount.com",
+        email=service_account_email,
         scopes=[
             "https://www.googleapis.com/auth/devstorage.read_only",
             "https://www.googleapis.com/auth/logging.write",
@@ -153,6 +150,7 @@ sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""",
             "https://www.googleapis.com/auth/trace.append",
         ],
     )
+
     insert_instance_request = InsertInstanceRequest(
         project=project_id,
         zone=zone,
@@ -185,9 +183,18 @@ sudo -u $sftp_username gcsfuse $bucket_name /home/$sftp_username/sftp""",
 
     # Create the instance
     InstancesClient().insert(request=insert_instance_request).result()
+    instance_response = InstancesClient().get(project=project_id, zone=zone, instance=instance_name)
+
+    return instance_response
 
 
-def add_shh_pub_key(project_id, zone, instance_name, sftp_username, key):
+def add_server_pub_key(
+    project_id,
+    zone,
+    instance_name,
+    key,
+    sftp_username,
+):
     """
     Add the provided SSH public key to the instance metadata.
 
@@ -200,46 +207,46 @@ def add_shh_pub_key(project_id, zone, instance_name, sftp_username, key):
     Returns:
         None
     """
-    instance_client = InstancesClient()
-    instance_response = instance_client.get(
+
+    instance_response = InstancesClient().get(
         project=project_id, zone=zone, instance=instance_name
     )
 
+    metadata_items = instance_response.metadata.items
     existing_ssh_keys = ""
-    for item in instance_response.metadata.items:
-        if item.key == "ssh-keys":
-            existing_ssh_keys = item.value
+    new_key = sftp_username.strip() + ":" + key.strip()
+    for item_index in range(len(metadata_items)):
+        if metadata_items[item_index].key == "ssh-keys":
+            existing_ssh_keys = metadata_items[item_index].value.split("\n")
+
+            # Check if the key already exists
+            need_append = True
+            for key_index in range(len(existing_ssh_keys)):
+                existing_ssh_keys[key_index] = existing_ssh_keys[key_index].strip()
+                if existing_ssh_keys[key_index] == new_key:
+                    need_append = False
+                    break
+
+            existing_ssh_keys = "\n".join(existing_ssh_keys)
+
+            # Update the instance metadata with the new SSH key
+            if need_append:
+                metadata_items[item_index].value = (
+                    existing_ssh_keys + "\n" + new_key
+                )
             break
 
-    new_key = sftp_username.strip() + ":" + key.strip()
-    need_append = True
-    if existing_ssh_keys:
-        existing_ssh_keys = existing_ssh_keys.split("\n")
-        keys = []
-        for key in existing_ssh_keys:
-            keys.append(key.strip())
-            if new_key == key.strip():
-                need_append = False
-                break
-        existing_ssh_keys = "\n".join(keys)
+    if not existing_ssh_keys:
+        metadata_items.append(Items(key="ssh-keys", value=new_key))
 
-    # Update the instance metadata with the new SSH key
-    if need_append:
-        request = SetMetadataInstanceRequest(
-            project=project_id,
-            zone=zone,
-            instance=instance_name,
-            metadata_resource=Metadata(
-                fingerprint=instance_response.metadata.fingerprint,
-                items=[
-                    Items(
-                        key="ssh-keys",
-                        value=(existing_ssh_keys + "\n" + new_key)
-                        if existing_ssh_keys
-                        else new_key,
-                    )
-                ],
-            ),
-        )
+    request = SetMetadataInstanceRequest(
+        project=project_id,
+        zone=zone,
+        instance=instance_name,
+        metadata_resource=Metadata(
+            fingerprint=instance_response.metadata.fingerprint,
+            items=metadata_items,
+        ),
+    )
 
-        InstancesClient().set_metadata(request).result()
+    InstancesClient().set_metadata(request).result()

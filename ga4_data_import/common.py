@@ -1,5 +1,8 @@
 # Common functions for the GA4 Data Import API code samples.
 
+import os
+import subprocess
+
 from google.cloud.resourcemanager_v3 import (
     ProjectsClient,
     SearchProjectsRequest,
@@ -22,21 +25,3 @@ def get_project_number(project_id):
         if response.project_id == project_id:
             project = response.name
             return project.replace("projects/", "")
-
-
-def get_region_from_zone(zone):
-    """
-    Get the region from the zone.
-
-    Args:
-        zone: The zone to get the region from.
-    Returns:
-        str, The region.
-    """
-    parts = zone.split("-")
-    return "-".join(parts[:-1])
-
-
-def read_pub_key(pub_key_path):
-    with open(pub_key_path, "r") as file:
-        return " ".join(file.read().strip().split(" ")[0:2])
