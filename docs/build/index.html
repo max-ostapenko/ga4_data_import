@@ -29,8 +29,145 @@
 
           <div class="body" role="main">
             
-  <section id="welcome-to-ga4-data-import-s-documentation">
-<h1>Welcome to ga4_data_import’s documentation!<a class="headerlink" href="#welcome-to-ga4-data-import-s-documentation" title="Permalink to this heading">¶</a></h1>
+  <section id="module-ga4_data_import.common">
+<span id="welcome-to-ga4-data-import-s-documentation"></span><h1>Welcome to ga4_data_import’s documentation!<a class="headerlink" href="#module-ga4_data_import.common" title="Permalink to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="ga4_data_import.common.get_project_number">
+<span class="sig-prename descclassname"><span class="pre">ga4_data_import.common.</span></span><span class="sig-name descname"><span class="pre">get_project_number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ga4_data_import/common.html#get_project_number"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ga4_data_import.common.get_project_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the project number from the project id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>project_id</strong> – The project id to get the project number from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, The project number.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-ga4_data_import.compute"></span><dl class="py function">
+<dt class="sig sig-object py" id="ga4_data_import.compute.add_server_pub_key">
+<span class="sig-prename descclassname"><span class="pre">ga4_data_import.compute.</span></span><span class="sig-name descname"><span class="pre">add_server_pub_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sftp_username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ga4_data_import/compute.html#add_server_pub_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ga4_data_import.compute.add_server_pub_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the provided SSH public key to the instance metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_id</strong> – The project id.</p></li>
+<li><p><strong>zone</strong> – The zone to create the instance in.</p></li>
+<li><p><strong>instance_name</strong> – The name of the instance.</p></li>
+<li><p><strong>sftp_username</strong> – The username to create on the instance.</p></li>
+<li><p><strong>key</strong> – SSH public key value to add to the instance metadata.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ga4_data_import.compute.create_instance">
+<span class="sig-prename descclassname"><span class="pre">ga4_data_import.compute.</span></span><span class="sig-name descname"><span class="pre">create_instance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">static_address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sftp_username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_account_email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ga4_data_import/compute.html#create_instance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ga4_data_import.compute.create_instance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Compute Engine instance with the provided name, project id, zone, and bucket name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>instance_name</strong> – The name of the instance.</p></li>
+<li><p><strong>project_id</strong> – The project id.</p></li>
+<li><p><strong>zone</strong> – The zone to create the instance in.</p></li>
+<li><p><strong>static_address</strong> – The static address to assign to the instance.</p></li>
+<li><p><strong>bucket_name</strong> – The name of the bucket to mount on the instance.</p></li>
+<li><p><strong>sftp_username</strong> – The username to create on the instance.</p></li>
+<li><p><strong>service_account_email</strong> – The service account email to use as the
+instance’s service account.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict, The instance response.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ga4_data_import.compute.create_static_address">
+<span class="sig-prename descclassname"><span class="pre">ga4_data_import.compute.</span></span><span class="sig-name descname"><span class="pre">create_static_address</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ga4_data_import/compute.html#create_static_address"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ga4_data_import.compute.create_static_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a static address with the provided name, project id, and region.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_id</strong> – The project id.</p></li>
+<li><p><strong>region</strong> – The region to create the address in.</p></li>
+<li><p><strong>instance_name</strong> – The name of the instance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>str, The static address.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-ga4_data_import.storage"></span><dl class="py function">
+<dt class="sig sig-object py" id="ga4_data_import.storage.add_bucket_read_access">
+<span class="sig-prename descclassname"><span class="pre">ga4_data_import.storage.</span></span><span class="sig-name descname"><span class="pre">add_bucket_read_access</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_account_email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ga4_data_import/storage.html#add_bucket_read_access"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ga4_data_import.storage.add_bucket_read_access" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add read access to the bucket for the compute service account.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_id</strong> – The project id.</p></li>
+<li><p><strong>bucket_name</strong> – The name of the bucket to add read access to.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ga4_data_import.storage.create_bucket">
+<span class="sig-prename descclassname"><span class="pre">ga4_data_import.storage.</span></span><span class="sig-name descname"><span class="pre">create_bucket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ga4_data_import/storage.html#create_bucket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ga4_data_import.storage.create_bucket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new bucket with the provided name in the provided project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_id</strong> – The project id.</p></li>
+<li><p><strong>bucket_name</strong> – The name of the bucket to create.</p></li>
+<li><p><strong>region</strong> – The region to create the bucket in.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-ga4_data_import.workflow"></span><dl class="py function">
+<dt class="sig sig-object py" id="ga4_data_import.workflow.deploy_scheduler">
+<span class="sig-prename descclassname"><span class="pre">ga4_data_import.workflow.</span></span><span class="sig-name descname"><span class="pre">deploy_scheduler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_account_email</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workflow_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storage_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ga4_data_import/workflow.html#deploy_scheduler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ga4_data_import.workflow.deploy_scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deploy a trigger to the project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_id</strong> – The project id.</p></li>
+<li><p><strong>region</strong> – The region to deploy to.</p></li>
+<li><p><strong>scheduler_id</strong> – The trigger id.</p></li>
+<li><p><strong>service_account_email</strong> – The service account email to use as the</p></li>
+<li><p><strong>schedule</strong> – The schedule for the trigger.</p></li>
+<li><p><strong>workflow_id</strong> – The workflow id.</p></li>
+<li><p><strong>query</strong> – The query to run.</p></li>
+<li><p><strong>storage_path</strong> – The storage path to export to.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ga4_data_import.workflow.deploy_workflow">
+<span class="sig-prename descclassname"><span class="pre">ga4_data_import.workflow.</span></span><span class="sig-name descname"><span class="pre">deploy_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workflow_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_account_email</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ga4_data_import/workflow.html#deploy_workflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ga4_data_import.workflow.deploy_workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deploy a workflow to the project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_id</strong> – The project id.</p></li>
+<li><p><strong>region</strong> – The region to deploy to.</p></li>
+<li><p><strong>workflow_id</strong> – The workflow id.</p></li>
+<li><p><strong>service_account_email</strong> – The service account email to use as the workflow’s service account.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 <div class="toctree-wrapper compound">
 </div>
 </section>

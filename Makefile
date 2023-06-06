@@ -14,4 +14,5 @@ release: build
 
 .PHONY: docs
 docs:
+	-rm -rf ./docs/build
 	sphinx-build -b html ./docs/source ./docs/build
