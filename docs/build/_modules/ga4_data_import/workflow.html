@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ga4_data_import.workflow &#8212; ga4_data_import 0.1.56 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for ga4_data_import.workflow</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">google.cloud.scheduler_v1.services.cloud_scheduler.client</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CloudSchedulerClient</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">google.cloud.workflows_v1.services.workflows.client</span> <span class="kn">import</span> <span class="n">WorkflowsClient</span>
+<span class="kn">from</span> <span class="nn">google.cloud.scheduler_v1.types</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Job</span><span class="p">,</span>
+    <span class="n">HttpTarget</span><span class="p">,</span>
+    <span class="n">HttpMethod</span><span class="p">,</span>
+    <span class="n">CreateJobRequest</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">google.cloud.workflows_v1.types</span> <span class="kn">import</span> <span class="n">Workflow</span><span class="p">,</span> <span class="n">CreateWorkflowRequest</span>
+
+
+<div class="viewcode-block" id="deploy_workflow"><a class="viewcode-back" href="../../index.html#ga4_data_import.workflow.deploy_workflow">[docs]</a><span class="k">def</span> <span class="nf">deploy_workflow</span><span class="p">(</span>
+    <span class="n">project_id</span><span class="p">,</span>
+    <span class="n">region</span><span class="p">,</span>
+    <span class="n">workflow_id</span><span class="p">,</span>
+    <span class="n">service_account_email</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deploy a workflow to the project.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        project_id: The project id.</span>
+<span class="sd">        region: The region to deploy to.</span>
+<span class="sd">        workflow_id: The workflow id.</span>
+<span class="sd">        service_account_email: The service account email to use as the workflow&#39;s service account.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">workflows_client</span> <span class="o">=</span> <span class="n">WorkflowsClient</span><span class="p">()</span>
+
+    <span class="c1"># Read the workflow definition file</span>
+    <span class="n">workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span>
+        <span class="n">service_account</span><span class="o">=</span><span class="n">service_account_email</span><span class="p">,</span>
+        <span class="n">source_contents</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+
+<span class="s2">main:</span>
+<span class="s2">    params: [args]</span>
+<span class="s2">    steps:</span>
+<span class="s2">    - init:</span>
+<span class="s2">        assign:</span>
+<span class="s2">        - project_id: $</span><span class="si">{args.project_id}</span>
+<span class="s2">        - query: $</span><span class="si">{args.query}</span>
+<span class="s2">        - storage_path: $</span><span class="si">{args.storage_path}</span>
+<span class="s2">    - query_data:</span>
+<span class="s2">        call: googleapis.bigquery.v2.jobs.insert</span>
+<span class="s2">        args:</span>
+<span class="s2">            projectId: $</span><span class="si">{project_id}</span>
+<span class="s2">            body:</span>
+<span class="s2">                configuration:</span>
+<span class="s2">                    query:</span>
+<span class="s2">                        useLegacySql: false</span>
+<span class="s2">                        flattenResults: true</span>
+<span class="s2">                        query: $</span><span class="si">{query}</span>
+<span class="s2">        result: queryResult</span>
+<span class="s2">    - get_source_table:</span>
+<span class="s2">        assign:</span>
+<span class="s2">        - dataset_id: $</span><span class="si">{queryResult.configuration.query.destinationTable.datasetId}</span>
+<span class="s2">        - table_id: $</span><span class="si">{queryResult.configuration.query.destinationTable.tableId}</span>
+<span class="s2">    - export_table:</span>
+<span class="s2">        call: googleapis.bigquery.v2.jobs.insert</span>
+<span class="s2">        args:</span>
+<span class="s2">            projectId: $</span><span class="si">{project_id}</span>
+<span class="s2">            body:</span>
+<span class="s2">                configuration:</span>
+<span class="s2">                    extract:</span>
+<span class="s2">                        destinationUri: $</span><span class="si">{storage_path}</span>
+<span class="s2">                        destinationFormat: &quot;csv&quot;</span>
+<span class="s2">                        sourceTable:</span>
+<span class="s2">                            projectId: $</span><span class="si">{project_id}</span>
+<span class="s2">                            datasetId: $</span><span class="si">{dataset_id}</span>
+<span class="s2">                            tableId: $</span><span class="si">{table_id}</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">request</span> <span class="o">=</span> <span class="n">CreateWorkflowRequest</span><span class="p">(</span>
+        <span class="n">parent</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;projects/</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">/locations/</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
+        <span class="n">workflow_id</span><span class="o">=</span><span class="n">workflow_id</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">workflows_client</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span><span class="n">request</span><span class="o">=</span><span class="n">request</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="deploy_scheduler"><a class="viewcode-back" href="../../index.html#ga4_data_import.workflow.deploy_scheduler">[docs]</a><span class="k">def</span> <span class="nf">deploy_scheduler</span><span class="p">(</span>
+    <span class="n">project_id</span><span class="p">,</span>
+    <span class="n">region</span><span class="p">,</span>
+    <span class="n">scheduler_id</span><span class="p">,</span>
+    <span class="n">service_account_email</span><span class="p">,</span>
+    <span class="n">schedule</span><span class="p">,</span>
+    <span class="n">workflow_id</span><span class="p">,</span>
+    <span class="n">query</span><span class="p">,</span>
+    <span class="n">storage_path</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deploy a trigger to the project.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        project_id: The project id.</span>
+<span class="sd">        region: The region to deploy to.</span>
+<span class="sd">        scheduler_id: The trigger id.</span>
+<span class="sd">        service_account_email: The service account email to use as the</span>
+<span class="sd">        schedule: The schedule for the trigger.</span>
+<span class="sd">        workflow_id: The workflow id.</span>
+<span class="sd">        query: The query to run.</span>
+<span class="sd">        storage_path: The storage path to export to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">CloudSchedulerClient</span><span class="p">()</span>
+    <span class="n">job_arguments</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span> <span class="s2">&quot;storage_path&quot;</span><span class="p">:</span> <span class="n">storage_path</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;projects/</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">/locations/</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">/jobs/</span><span class="si">{</span><span class="n">scheduler_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
+        <span class="n">time_zone</span><span class="o">=</span><span class="s2">&quot;Etc/UTC&quot;</span><span class="p">,</span>
+        <span class="n">http_target</span><span class="o">=</span><span class="n">HttpTarget</span><span class="p">(</span>
+            <span class="n">uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;https://workflowexecutions.googleapis.com/v1/projects/</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">/locations/</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">/workflows/</span><span class="si">{</span><span class="n">workflow_id</span><span class="si">}</span><span class="s2">/executions&quot;</span><span class="p">,</span>
+            <span class="n">http_method</span><span class="o">=</span><span class="n">HttpMethod</span><span class="o">.</span><span class="n">POST</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">body</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;argument&quot;</span><span class="p">:</span> <span class="n">job_arguments</span><span class="p">})</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+            <span class="n">oauth_token</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;service_account_email&quot;</span><span class="p">:</span> <span class="n">service_account_email</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">request</span> <span class="o">=</span> <span class="n">CreateJobRequest</span><span class="p">(</span>
+        <span class="n">parent</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;projects/</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">/locations/</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">job</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">client</span><span class="o">.</span><span class="n">create_job</span><span class="p">(</span><span class="n">request</span><span class="o">=</span><span class="n">request</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">ga4_data_import</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=max_ostapenko&repo=ga4_data_import&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Max Ostapenko.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+    <a href="https://github.com/max_ostapenko/ga4_data_import" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

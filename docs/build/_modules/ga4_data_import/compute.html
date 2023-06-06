@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ga4_data_import.compute &#8212; ga4_data_import 0.1.56 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for ga4_data_import.compute</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file contains functions for creating a Compute Engine instance and static address.</span>
+
+<span class="kn">from</span> <span class="nn">google.cloud.compute_v1.services.instances.client</span> <span class="kn">import</span> <span class="n">InstancesClient</span>
+<span class="kn">from</span> <span class="nn">google.cloud.compute_v1.services.addresses.client</span> <span class="kn">import</span> <span class="n">AddressesClient</span>
+<span class="kn">from</span> <span class="nn">google.cloud.compute_v1.types</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Address</span><span class="p">,</span>
+    <span class="n">AccessConfig</span><span class="p">,</span>
+    <span class="n">AttachedDisk</span><span class="p">,</span>
+    <span class="n">AttachedDiskInitializeParams</span><span class="p">,</span>
+    <span class="n">InsertAddressRequest</span><span class="p">,</span>
+    <span class="n">InsertInstanceRequest</span><span class="p">,</span>
+    <span class="n">Instance</span><span class="p">,</span>
+    <span class="n">Items</span><span class="p">,</span>
+    <span class="n">GetAddressRequest</span><span class="p">,</span>
+    <span class="n">Metadata</span><span class="p">,</span>
+    <span class="n">NetworkInterface</span><span class="p">,</span>
+    <span class="n">Scheduling</span><span class="p">,</span>
+    <span class="n">ServiceAccount</span><span class="p">,</span>
+    <span class="n">ShieldedInstanceConfig</span><span class="p">,</span>
+    <span class="n">ShieldedInstanceIntegrityPolicy</span><span class="p">,</span>
+    <span class="n">SetMetadataInstanceRequest</span><span class="p">,</span>
+    <span class="n">Tags</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">ga4_data_import.common</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_project_number</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="create_static_address"><a class="viewcode-back" href="../../index.html#ga4_data_import.compute.create_static_address">[docs]</a><span class="k">def</span> <span class="nf">create_static_address</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">instance_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a static address with the provided name, project id, and region.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        project_id: The project id.</span>
+<span class="sd">        region: The region to create the address in.</span>
+<span class="sd">        instance_name: The name of the instance.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str, The static address.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">address_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance_name</span><span class="si">}</span><span class="s2">-static&quot;</span>
+    <span class="n">address_request</span> <span class="o">=</span> <span class="n">GetAddressRequest</span><span class="p">(</span>
+        <span class="n">project</span><span class="o">=</span><span class="n">project_id</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="n">address_name</span>
+    <span class="p">)</span>
+    <span class="n">address_client</span> <span class="o">=</span> <span class="n">AddressesClient</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Check if the address already exists</span>
+        <span class="n">existing_address_response</span> <span class="o">=</span> <span class="n">address_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">address_request</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">existing_address_response</span><span class="o">.</span><span class="n">address</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="c1"># Address does not exist, create a new one</span>
+        <span class="n">insert_address_request</span> <span class="o">=</span> <span class="n">InsertAddressRequest</span><span class="p">(</span>
+            <span class="n">project</span><span class="o">=</span><span class="n">project_id</span><span class="p">,</span>
+            <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span>
+            <span class="n">address_resource</span><span class="o">=</span><span class="n">Address</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">address_name</span><span class="p">,</span> <span class="n">network_tier</span><span class="o">=</span><span class="s2">&quot;STANDARD&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">address_client</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">insert_address_request</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="n">new_address_response</span> <span class="o">=</span> <span class="n">address_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">address_request</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_address_response</span><span class="o">.</span><span class="n">address</span></div>
+
+
+<div class="viewcode-block" id="create_instance"><a class="viewcode-back" href="../../index.html#ga4_data_import.compute.create_instance">[docs]</a><span class="k">def</span> <span class="nf">create_instance</span><span class="p">(</span>
+    <span class="n">instance_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">zone</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">static_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">bucket_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">sftp_username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">service_account_email</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a Compute Engine instance with the provided name, project id, zone, and bucket name.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        instance_name: The name of the instance.</span>
+<span class="sd">        project_id: The project id.</span>
+<span class="sd">        zone: The zone to create the instance in.</span>
+<span class="sd">        static_address: The static address to assign to the instance.</span>
+<span class="sd">        bucket_name: The name of the bucket to mount on the instance.</span>
+<span class="sd">        sftp_username: The username to create on the instance.</span>
+<span class="sd">        service_account_email: The service account email to use as the</span>
+<span class="sd">            instance&#39;s service account.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict, The instance response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Create the instance request</span>
+    <span class="n">disk</span> <span class="o">=</span> <span class="n">AttachedDisk</span><span class="p">(</span>
+        <span class="n">auto_delete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">boot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">initialize_params</span><span class="o">=</span><span class="n">AttachedDiskInitializeParams</span><span class="p">(</span>
+            <span class="n">disk_size_gb</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">source_image</span><span class="o">=</span><span class="s2">&quot;projects/debian-cloud/global/images/debian-11-bullseye-v20230509&quot;</span><span class="p">,</span>
+            <span class="n">disk_type</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;projects/</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">/zones/</span><span class="si">{</span><span class="n">zone</span><span class="si">}</span><span class="s2">/diskTypes/pd-balanced&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">Items</span><span class="p">(</span>
+            <span class="n">key</span><span class="o">=</span><span class="s2">&quot;startup-script&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;#!/bin/bash</span>
+<span class="s2"># Install gcsfuse</span>
+<span class="s2"># https://cloud.google.com/storage/docs/gcsfuse-quickstart-mount-bucket#install</span>
+<span class="s2">export GCSFUSE_REPO=gcsfuse-$(lsb_release -c -s)</span>
+<span class="s2">echo &quot;deb https://packages.cloud.google.com/apt $GCSFUSE_REPO main&quot; | sudo tee /etc/apt/sources.list.d/gcsfuse.list</span>
+<span class="s2">curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -</span>
+<span class="s2">apt-get update -y</span>
+<span class="s2">apt-get install -y fuse gcsfuse</span>
+<span class="s2">rm -rf /var/lib/apt/lists/*</span>
+
+<span class="s2"># Create SFTP user</span>
+<span class="s2">adduser </span><span class="si">{</span><span class="n">sftp_username</span><span class="si">}</span>
+
+<span class="s2"># Mount bucket</span>
+<span class="s2">sudo -u </span><span class="si">{</span><span class="n">sftp_username</span><span class="si">}</span><span class="s2"> mkdir /home/</span><span class="si">{</span><span class="n">sftp_username</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">bucket_name</span><span class="si">}</span><span class="s2">_mounted</span>
+<span class="s2">sudo -u </span><span class="si">{</span><span class="n">sftp_username</span><span class="si">}</span><span class="s2"> gcsfuse -o ro --implicit-dirs --enable-storage-client-library </span><span class="si">{</span><span class="n">bucket_name</span><span class="si">}</span><span class="s2"> /home/</span><span class="si">{</span><span class="n">sftp_username</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">bucket_name</span><span class="si">}</span><span class="s2">_mounted</span>
+<span class="s2">chown root:root /home/</span><span class="si">{</span><span class="n">sftp_username</span><span class="si">}</span>
+
+<span class="s2"># Configure SFTP server</span>
+<span class="s2">sed -i &quot;s/^Subsystem</span><span class="se">\t</span><span class="s2">sftp.*/Subsystem</span><span class="se">\t</span><span class="s2">sftp internal-sftp/&quot; /etc/ssh/sshd_config</span>
+<span class="s2">tee -a /etc/ssh/sshd_config &lt;&lt; EOM</span>
+<span class="s2">Match User </span><span class="si">{</span><span class="n">sftp_username</span><span class="si">}</span>
+<span class="se">\t</span><span class="s2">ForceCommand internal-sftp -d /</span><span class="si">{</span><span class="n">bucket_name</span><span class="si">}</span><span class="s2">_mounted</span>
+<span class="se">\t</span><span class="s2">ChrootDirectory /home/%u</span>
+<span class="se">\t</span><span class="s2">AllowTcpForwarding no</span>
+<span class="se">\t</span><span class="s2">X11Forwarding no</span>
+<span class="se">\t</span><span class="s2">PasswordAuthentication no</span>
+<span class="se">\t</span><span class="s2">AuthenticationMethods publickey</span>
+<span class="s2">EOM</span>
+<span class="s2">systemctl restart ssh&quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="n">network_interface</span> <span class="o">=</span> <span class="n">NetworkInterface</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance_name</span><span class="si">}</span><span class="s2">-nic0&quot;</span><span class="p">,</span>
+        <span class="n">access_configs</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccessConfig</span><span class="p">(</span>
+                <span class="n">nat_i_p</span><span class="o">=</span><span class="n">static_address</span><span class="p">,</span>
+                <span class="n">network_tier</span><span class="o">=</span><span class="s2">&quot;STANDARD&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">service_account_email</span><span class="p">:</span>
+        <span class="n">project_number</span> <span class="o">=</span> <span class="n">get_project_number</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
+        <span class="n">service_account_email</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_number</span><span class="si">}</span><span class="s2">-compute@developer.gserviceaccount.com&quot;</span>
+    <span class="n">service_account</span> <span class="o">=</span> <span class="n">ServiceAccount</span><span class="p">(</span>
+        <span class="n">email</span><span class="o">=</span><span class="n">service_account_email</span><span class="p">,</span>
+        <span class="n">scopes</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;https://www.googleapis.com/auth/devstorage.read_only&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;https://www.googleapis.com/auth/logging.write&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;https://www.googleapis.com/auth/monitoring.write&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;https://www.googleapis.com/auth/servicecontrol&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;https://www.googleapis.com/auth/service.management.readonly&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;https://www.googleapis.com/auth/trace.append&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">insert_instance_request</span> <span class="o">=</span> <span class="n">InsertInstanceRequest</span><span class="p">(</span>
+        <span class="n">project</span><span class="o">=</span><span class="n">project_id</span><span class="p">,</span>
+        <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span>
+        <span class="n">instance_resource</span><span class="o">=</span><span class="n">Instance</span><span class="p">(</span>
+            <span class="n">disks</span><span class="o">=</span><span class="p">[</span><span class="n">disk</span><span class="p">],</span>
+            <span class="n">machine_type</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;projects/</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">/zones/</span><span class="si">{</span><span class="n">zone</span><span class="si">}</span><span class="s2">/machineTypes/f1-micro&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">instance_name</span><span class="p">,</span>
+            <span class="n">network_interfaces</span><span class="o">=</span><span class="p">[</span><span class="n">network_interface</span><span class="p">],</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">Metadata</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">metadata</span><span class="p">),</span>
+            <span class="n">scheduling</span><span class="o">=</span><span class="n">Scheduling</span><span class="p">(</span>
+                <span class="n">automatic_restart</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">on_host_maintenance</span><span class="o">=</span><span class="s2">&quot;MIGRATE&quot;</span><span class="p">,</span>
+                <span class="n">preemptible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">provisioning_model</span><span class="o">=</span><span class="s2">&quot;STANDARD&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">service_accounts</span><span class="o">=</span><span class="p">[</span><span class="n">service_account</span><span class="p">],</span>
+            <span class="n">shielded_instance_config</span><span class="o">=</span><span class="n">ShieldedInstanceConfig</span><span class="p">(</span>
+                <span class="n">enable_secure_boot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">enable_vtpm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">enable_integrity_monitoring</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">tags</span><span class="o">=</span><span class="n">Tags</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;default-allow-ssh&quot;</span><span class="p">]),</span>
+            <span class="n">shielded_instance_integrity_policy</span><span class="o">=</span><span class="n">ShieldedInstanceIntegrityPolicy</span><span class="p">(</span>
+                <span class="n">update_auto_learn_policy</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">),</span>
+            <span class="n">ignore_unknown_fields</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ignore_unknown_fields</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create the instance</span>
+    <span class="n">InstancesClient</span><span class="p">()</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">request</span><span class="o">=</span><span class="n">insert_instance_request</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+    <span class="n">instance_response</span> <span class="o">=</span> <span class="n">InstancesClient</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">project_id</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="n">instance_name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">instance_response</span></div>
+
+
+<div class="viewcode-block" id="add_server_pub_key"><a class="viewcode-back" href="../../index.html#ga4_data_import.compute.add_server_pub_key">[docs]</a><span class="k">def</span> <span class="nf">add_server_pub_key</span><span class="p">(</span>
+    <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">zone</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">instance_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">sftp_username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add the provided SSH public key to the instance metadata.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        project_id: The project id.</span>
+<span class="sd">        zone: The zone to create the instance in.</span>
+<span class="sd">        instance_name: The name of the instance.</span>
+<span class="sd">        sftp_username: The username to create on the instance.</span>
+<span class="sd">        key: SSH public key value to add to the instance metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">instance_response</span> <span class="o">=</span> <span class="n">InstancesClient</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="n">project</span><span class="o">=</span><span class="n">project_id</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="n">instance_name</span>
+    <span class="p">)</span>
+
+    <span class="n">metadata_items</span> <span class="o">=</span> <span class="n">instance_response</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">items</span>
+    <span class="n">existing_ssh_keys</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">new_key</span> <span class="o">=</span> <span class="n">sftp_username</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">item_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">metadata_items</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">metadata_items</span><span class="p">[</span><span class="n">item_index</span><span class="p">]</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;ssh-keys&quot;</span><span class="p">:</span>
+            <span class="n">existing_ssh_keys</span> <span class="o">=</span> <span class="n">metadata_items</span><span class="p">[</span><span class="n">item_index</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Check if the key already exists</span>
+            <span class="n">need_append</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">for</span> <span class="n">key_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">existing_ssh_keys</span><span class="p">)):</span>
+                <span class="n">existing_ssh_keys</span><span class="p">[</span><span class="n">key_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">existing_ssh_keys</span><span class="p">[</span><span class="n">key_index</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">existing_ssh_keys</span><span class="p">[</span><span class="n">key_index</span><span class="p">]</span> <span class="o">==</span> <span class="n">new_key</span><span class="p">:</span>
+                    <span class="n">need_append</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">break</span>
+
+            <span class="n">existing_ssh_keys</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">existing_ssh_keys</span><span class="p">)</span>
+
+            <span class="c1"># Update the instance metadata with the new SSH key</span>
+            <span class="k">if</span> <span class="n">need_append</span><span class="p">:</span>
+                <span class="n">metadata_items</span><span class="p">[</span><span class="n">item_index</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">existing_ssh_keys</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">new_key</span>
+                <span class="p">)</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">existing_ssh_keys</span><span class="p">:</span>
+        <span class="n">metadata_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Items</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;ssh-keys&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">new_key</span><span class="p">))</span>
+
+    <span class="n">request</span> <span class="o">=</span> <span class="n">SetMetadataInstanceRequest</span><span class="p">(</span>
+        <span class="n">project</span><span class="o">=</span><span class="n">project_id</span><span class="p">,</span>
+        <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span>
+        <span class="n">instance</span><span class="o">=</span><span class="n">instance_name</span><span class="p">,</span>
+        <span class="n">metadata_resource</span><span class="o">=</span><span class="n">Metadata</span><span class="p">(</span>
+            <span class="n">fingerprint</span><span class="o">=</span><span class="n">instance_response</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">fingerprint</span><span class="p">,</span>
+            <span class="n">items</span><span class="o">=</span><span class="n">metadata_items</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">InstancesClient</span><span class="p">()</span><span class="o">.</span><span class="n">set_metadata</span><span class="p">(</span><span class="n">request</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">ga4_data_import</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=max_ostapenko&repo=ga4_data_import&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Max Ostapenko.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+    <a href="https://github.com/max_ostapenko/ga4_data_import" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
