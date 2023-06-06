@@ -32,10 +32,12 @@ classifiers = [
     "Topic :: Utilities"
 ]
 
-dependencies = [ # Optional
+dependencies = [
     "google-cloud-compute",
     "google-cloud-resource-manager",
-    "google-cloud-storage"
+    "google-cloud-storage",
+    "google-cloud-workflows",
+    "google-cloud-scheduler"
 ]
 
 [project.optional-dependencies]
@@ -60,3 +62,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["ga4_data_import"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
