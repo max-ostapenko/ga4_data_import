@@ -11,3 +11,7 @@ release: build
 	@read yn; if [ yes -ne $(yn) ]; then exit 1; fi
 	@echo "Here we go..."
 	twine upload dist/*
+
+.PHONY: docs
+docs:
+	sphinx-build -b html ./doc/source ./doc/build
