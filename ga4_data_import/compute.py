@@ -29,6 +29,7 @@ from ga4_data_import.common import (
 def create_static_address(project_id, region, instance_name):
     """
     Create a static address with the provided name, project id, and region.
+
     Args:
         project_id: The project id.
         region: The region to create the address in.
@@ -69,6 +70,7 @@ def create_instance(
 ):
     """
     Create a Compute Engine instance with the provided name, project id, zone, and bucket name.
+    
     Args:
         instance_name: The name of the instance.
         project_id: The project id.

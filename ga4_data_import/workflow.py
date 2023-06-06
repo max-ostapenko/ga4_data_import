@@ -21,6 +21,7 @@ def deploy_workflow(
 ):
     """
     Deploy a workflow to the project.
+
     Args:
         project_id: The project id.
         region: The region to deploy to.
@@ -96,6 +97,7 @@ def deploy_scheduler(
 ):
     """
     Deploy a trigger to the project.
+    
     Args:
         project_id: The project id.
         region: The region to deploy to.
