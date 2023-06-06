@@ -84,10 +84,10 @@ main:
     workflows_client.create_workflow(request=request).result()
 
 
-def deploy_trigger(
+def deploy_scheduler(
     project_id,
     region,
-    trigger_id,
+    scheduler_id,
     service_account_email,
     schedule,
     workflow_id,
@@ -99,7 +99,7 @@ def deploy_trigger(
     Args:
         project_id: The project id.
         region: The region to deploy to.
-        trigger_id: The trigger id.
+        scheduler_id: The trigger id.
         service_account_email: The service account email to use as the
         schedule: The schedule for the trigger.
         workflow_id: The workflow id.
@@ -114,7 +114,7 @@ def deploy_trigger(
     )
 
     job = Job(
-        name=f"projects/{project_id}/locations/{region}/jobs/{trigger_id}",
+        name=f"projects/{project_id}/locations/{region}/jobs/{scheduler_id}",
         schedule=schedule,
         time_zone="Etc/UTC",
         http_target=HttpTarget(

@@ -6,7 +6,7 @@ Automating regular data import to GA4
 ## Import source - BigQuery / Cloud Storage / SFTP
 
 <!-- markdownlint-disable-next-line MD033 -->
-<a href="https://colab.research.google.com/github/max-ostapenko/ga4_data_import/blob/main/scripts/GCS_to_GA4.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+<a href="https://colab.research.google.com/github/max-ostapenko/ga4_data_import/blob/main/scripts/GA4_Data_Import.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
 Google Colab is an easy to start thanks to its visual interface and Google-ready environment.
 
