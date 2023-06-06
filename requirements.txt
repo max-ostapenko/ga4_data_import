@@ -3,3 +3,5 @@ ipykernel
 google-cloud-compute
 google-cloud-resource-manager
 google-cloud-storage
+google-cloud-workflows
+google-cloud-scheduler

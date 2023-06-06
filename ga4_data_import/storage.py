@@ -1,5 +1,5 @@
 # This file contains functions for interacting with Google Cloud Storage.
-from google.cloud import storage
+from google.cloud.storage import Client as StorageClient
 
 
 def create_bucket(bucket_name: str, region: str, ):
@@ -11,7 +11,7 @@ def create_bucket(bucket_name: str, region: str, ):
         bucket_name: The name of the bucket to create.
         region: The region to create the bucket in.
     """
-    client = storage.Client()
+    client = StorageClient()
 
     try:
         bucket = client.get_bucket(bucket_name)
@@ -32,7 +32,7 @@ def add_bucket_read_access(
         project_id: The project id.
         bucket_name: The name of the bucket to add read access to.
     """
-    client = storage.Client()
+    client = StorageClient()
     bucket = client.get_bucket(bucket_name)
     policy = bucket.get_iam_policy(requested_policy_version=3)
     policy.bindings.append(
