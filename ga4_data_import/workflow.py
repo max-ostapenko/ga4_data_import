@@ -26,9 +26,7 @@ def deploy_workflow(
         project_id: The project id.
         region: The region to deploy to.
         workflow_id: The workflow id.
-        service_account_email: The service account email to use as the
-    Returns:
-        None
+        service_account_email: The service account email to use as the workflow's service account.
     """
     workflows_client = WorkflowsClient()
 
@@ -97,7 +95,7 @@ def deploy_scheduler(
 ):
     """
     Deploy a trigger to the project.
-    
+
     Args:
         project_id: The project id.
         region: The region to deploy to.
@@ -107,8 +105,6 @@ def deploy_scheduler(
         workflow_id: The workflow id.
         query: The query to run.
         storage_path: The storage path to export to.
-    Returns:
-        None
     """
     client = CloudSchedulerClient()
     job_arguments = json.dumps(
