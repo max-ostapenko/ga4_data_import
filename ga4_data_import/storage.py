@@ -3,6 +3,7 @@ This file contains functions for interacting with Google Cloud Storage.
 """
 
 from google.cloud.storage import Client as StorageClient
+from google.api_core import exceptions as core_exceptions
 
 
 def create_bucket(bucket_name: str, region: str, ):
@@ -18,7 +19,7 @@ def create_bucket(bucket_name: str, region: str, ):
 
     try:
         bucket = client.get_bucket(bucket_name)
-    except Exception:
+    except core_exceptions.NotFound:
         bucket = client.bucket(bucket_name)
         bucket.storage_class = "STANDARD"
         client.create_bucket(bucket, location=region)

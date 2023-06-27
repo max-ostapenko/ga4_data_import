@@ -5,3 +5,4 @@ google-cloud-resource-manager
 google-cloud-storage
 google-cloud-workflows
 google-cloud-scheduler
+google-cloud-core

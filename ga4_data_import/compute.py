@@ -23,6 +23,7 @@ from google.cloud.compute_v1.types import (
     SetMetadataInstanceRequest,
     Tags,
 )
+from google.api_core import exceptions as core_exceptions
 from ga4_data_import.common import (
     get_project_number,
 )
@@ -50,7 +51,7 @@ def create_static_address(project_id: str, region: str, instance_name: str):
         # Check if the address already exists
         existing_address_response = address_client.get(address_request)
         return existing_address_response.address
-    except Exception:
+    except core_exceptions.NotFound:
         # Address does not exist, create a new one
         insert_address_request = InsertAddressRequest(
             project=project_id,

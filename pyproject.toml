@@ -76,3 +76,6 @@ render_toc = true
 [tool.pydoc-markdown.renderer.source_linker]
 type = "github"
 repo = "max-ostapenko/ga4_data_import"
+
+[tool.pylint.main]
+disable = ["too-many-arguments"]

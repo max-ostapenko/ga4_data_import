@@ -120,7 +120,7 @@ def deploy_scheduler(
         schedule=schedule,
         time_zone="Etc/UTC",
         http_target=HttpTarget(
-            uri=f"https://workflowexecutions.googleapis.com/v1/projects/{project_id}/locations/{region}/workflows/{workflow_id}/executions", # noqa: C0301
+            uri=f"https://workflowexecutions.googleapis.com/v1/projects/{project_id}/locations/{region}/workflows/{workflow_id}/executions", # pylint: disable=line-too-long
             http_method=HttpMethod.POST,
             headers={
                 "Content-Type": "application/json",
