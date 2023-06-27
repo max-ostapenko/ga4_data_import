@@ -18,7 +18,7 @@ def create_bucket(bucket_name: str, region: str, ):
 
     try:
         bucket = client.get_bucket(bucket_name)
-    except:
+    except Exception:
         bucket = client.bucket(bucket_name)
         bucket.storage_class = "STANDARD"
         client.create_bucket(bucket, location=region)
