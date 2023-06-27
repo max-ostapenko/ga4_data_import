@@ -26,13 +26,15 @@ from ga4_data_import.common import (
 )
 
 
-def create_static_address(project_id, region, instance_name):
+def create_static_address(project_id: str, region: str, instance_name: str):
     """
     Create a static address with the provided name, project id, and region.
+
     Args:
         project_id: The project id.
         region: The region to create the address in.
         instance_name: The name of the instance.
+
     Returns:
         str, The static address.
     """
@@ -59,23 +61,29 @@ def create_static_address(project_id, region, instance_name):
 
 
 def create_instance(
-    instance_name,
-    project_id,
-    zone,
-    static_address,
-    bucket_name,
-    sftp_username,
-    service_account_email = None,
+    instance_name: str,
+    project_id: str,
+    zone: str,
+    static_address: str,
+    bucket_name: str,
+    sftp_username: str,
+    service_account_email: str = "",
 ):
     """
     Create a Compute Engine instance with the provided name, project id, zone, and bucket name.
+
     Args:
         instance_name: The name of the instance.
         project_id: The project id.
         zone: The zone to create the instance in.
         static_address: The static address to assign to the instance.
-        sftp_username: The username to create on the instance.
         bucket_name: The name of the bucket to mount on the instance.
+        sftp_username: The username to create on the instance.
+        service_account_email: The service account email to use as the
+            instance's service account.
+
+    Returns:
+        dict, The instance response.
     """
 
     # Create the instance request
@@ -189,11 +197,11 @@ systemctl restart ssh""",
 
 
 def add_server_pub_key(
-    project_id,
-    zone,
-    instance_name,
-    key,
-    sftp_username,
+    project_id: str,
+    zone: str,
+    instance_name: str,
+    key: str,
+    sftp_username: str,
 ):
     """
     Add the provided SSH public key to the instance metadata.
@@ -203,9 +211,7 @@ def add_server_pub_key(
         zone: The zone to create the instance in.
         instance_name: The name of the instance.
         sftp_username: The username to create on the instance.
-        key: SSH public key value
-    Returns:
-        None
+        key: SSH public key value to add to the instance metadata.
     """
 
     instance_response = InstancesClient().get(

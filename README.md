@@ -16,3 +16,7 @@ Open it and follow the instructions to get a pipeline running within a minute.
 
 <!-- markdownlint-disable-next-line MD033 -->
 ![diagram](https://raw.githubusercontent.com/max-ostapenko/ga4_data_import/main/static/GCS_to_GA4%20Data%20Import%20pipeline.png)
+
+
+## Module documentation
+[module.md](docs/index.md)
