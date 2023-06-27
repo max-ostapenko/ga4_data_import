@@ -1,4 +1,6 @@
-# This file contains functions for creating a Compute Engine instance and static address.
+"""
+This file contains functions for creating a Compute Engine instance and static address.
+"""
 
 from google.cloud.compute_v1.services.instances.client import InstancesClient
 from google.cloud.compute_v1.services.addresses.client import AddressesClient

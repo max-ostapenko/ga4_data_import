@@ -1,4 +1,7 @@
-# This file contains functions for interacting with Google Cloud Storage.
+"""
+This file contains functions for interacting with Google Cloud Storage.
+"""
+
 from google.cloud.storage import Client as StorageClient
 
 
