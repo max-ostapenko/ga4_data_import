@@ -18,9 +18,13 @@
 
 # ga4\_data\_import
 
+Google Analytics 4 Data Import pipeline using Google Cloud Platform.
+
 <a id="ga4_data_import.common"></a>
 
 # ga4\_data\_import.common
+
+Common functions for the GA4 Data Import API code samples.
 
 <a id="ga4_data_import.common.get_project_number"></a>
 
@@ -30,7 +34,7 @@
 def get_project_number(project_id: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/263bea4d3da5e6ea71f7ca03327baac00dfb1fb9/ga4_data_import/common.py#L9)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/d6a7f4f354ca8587921f45596c05f894618443f5/ga4_data_import/common.py#L9)
 
 Get the project number from the project id.
 
@@ -47,6 +51,8 @@ Get the project number from the project id.
 
 # ga4\_data\_import.compute
 
+This file contains functions for creating a Compute Engine instance and static address.
+
 <a id="ga4_data_import.compute.create_static_address"></a>
 
 #### create\_static\_address
@@ -55,7 +61,7 @@ Get the project number from the project id.
 def create_static_address(project_id: str, region: str, instance_name: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/263bea4d3da5e6ea71f7ca03327baac00dfb1fb9/ga4_data_import/compute.py#L29)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/d6a7f4f354ca8587921f45596c05f894618443f5/ga4_data_import/compute.py#L32)
 
 Create a static address with the provided name, project id, and region.
 
@@ -84,7 +90,7 @@ def create_instance(instance_name: str,
                     service_account_email: str = "")
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/263bea4d3da5e6ea71f7ca03327baac00dfb1fb9/ga4_data_import/compute.py#L63)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/d6a7f4f354ca8587921f45596c05f894618443f5/ga4_data_import/compute.py#L66)
 
 Create a Compute Engine instance with the provided name, project id, zone, and bucket name.
 
@@ -110,10 +116,10 @@ Create a Compute Engine instance with the provided name, project id, zone, and b
 
 ```python
 def add_server_pub_key(project_id: str, zone: str, instance_name: str,
-                       key: str, sftp_username: str)
+                       pub_key: str, username: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/263bea4d3da5e6ea71f7ca03327baac00dfb1fb9/ga4_data_import/compute.py#L199)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/d6a7f4f354ca8587921f45596c05f894618443f5/ga4_data_import/compute.py#L202)
 
 Add the provided SSH public key to the instance metadata.
 
@@ -122,12 +128,14 @@ Add the provided SSH public key to the instance metadata.
 - `project_id` - The project id.
 - `zone` - The zone to create the instance in.
 - `instance_name` - The name of the instance.
-- `sftp_username` - The username to create on the instance.
-- `key` - SSH public key value to add to the instance metadata.
+- `pub_key` - SSH public key value to add to the instance metadata.
+- `username` - The username to create on the instance.
 
 <a id="ga4_data_import.storage"></a>
 
 # ga4\_data\_import.storage
+
+This file contains functions for interacting with Google Cloud Storage.
 
 <a id="ga4_data_import.storage.create_bucket"></a>
 
@@ -137,7 +145,7 @@ Add the provided SSH public key to the instance metadata.
 def create_bucket(bucket_name: str, region: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/263bea4d3da5e6ea71f7ca03327baac00dfb1fb9/ga4_data_import/storage.py#L5)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/d6a7f4f354ca8587921f45596c05f894618443f5/ga4_data_import/storage.py#L9)
 
 Create a new bucket with the provided name in the provided project.
 
@@ -155,7 +163,7 @@ Create a new bucket with the provided name in the provided project.
 def add_bucket_read_access(bucket_name: str, service_account_email: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/263bea4d3da5e6ea71f7ca03327baac00dfb1fb9/ga4_data_import/storage.py#L24)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/d6a7f4f354ca8587921f45596c05f894618443f5/ga4_data_import/storage.py#L28)
 
 Add read access to the bucket for the compute service account.
 
@@ -168,6 +176,8 @@ Add read access to the bucket for the compute service account.
 
 # ga4\_data\_import.workflow
 
+Workflow deployment module to configure BigQuery export to Cloud Storage.
+
 <a id="ga4_data_import.workflow.deploy_workflow"></a>
 
 #### deploy\_workflow
@@ -176,7 +186,7 @@ Add read access to the bucket for the compute service account.
 def deploy_workflow(project_id, region, workflow_id, service_account_email)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/263bea4d3da5e6ea71f7ca03327baac00dfb1fb9/ga4_data_import/workflow.py#L16)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/d6a7f4f354ca8587921f45596c05f894618443f5/ga4_data_import/workflow.py#L20)
 
 Deploy a workflow to the project.
 
@@ -196,7 +206,7 @@ def deploy_scheduler(project_id, region, scheduler_id, service_account_email,
                      schedule, workflow_id, query, storage_path)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/263bea4d3da5e6ea71f7ca03327baac00dfb1fb9/ga4_data_import/workflow.py#L86)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/d6a7f4f354ca8587921f45596c05f894618443f5/ga4_data_import/workflow.py#L90)
 
 Deploy a trigger to the project.
 
