@@ -23,3 +23,5 @@ def get_project_number(project_id: str):
         if response.project_id == project_id:
             project = response.name
             return project.replace("projects/", "")
+
+    return ""
