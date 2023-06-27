@@ -1,4 +1,6 @@
-# This file contains functions for creating a Compute Engine instance and static address.
+"""
+This file contains functions for creating a Compute Engine instance and static address.
+"""
 
 from google.cloud.compute_v1.services.instances.client import InstancesClient
 from google.cloud.compute_v1.services.addresses.client import AddressesClient
@@ -21,6 +23,7 @@ from google.cloud.compute_v1.types import (
     SetMetadataInstanceRequest,
     Tags,
 )
+from google.api_core import exceptions as core_exceptions
 from ga4_data_import.common import (
     get_project_number,
 )
@@ -48,7 +51,7 @@ def create_static_address(project_id: str, region: str, instance_name: str):
         # Check if the address already exists
         existing_address_response = address_client.get(address_request)
         return existing_address_response.address
-    except:
+    except core_exceptions.NotFound:
         # Address does not exist, create a new one
         insert_address_request = InsertAddressRequest(
             project=project_id,
@@ -200,8 +203,8 @@ def add_server_pub_key(
     project_id: str,
     zone: str,
     instance_name: str,
-    key: str,
-    sftp_username: str,
+    pub_key: str,
+    username: str,
 ):
     """
     Add the provided SSH public key to the instance metadata.
@@ -210,8 +213,8 @@ def add_server_pub_key(
         project_id: The project id.
         zone: The zone to create the instance in.
         instance_name: The name of the instance.
-        sftp_username: The username to create on the instance.
-        key: SSH public key value to add to the instance metadata.
+        pub_key: SSH public key value to add to the instance metadata.
+        username: The username to create on the instance.
     """
 
     instance_response = InstancesClient().get(
@@ -220,16 +223,16 @@ def add_server_pub_key(
 
     metadata_items = instance_response.metadata.items
     existing_ssh_keys = ""
-    new_key = sftp_username.strip() + ":" + key.strip()
-    for item_index in range(len(metadata_items)):
-        if metadata_items[item_index].key == "ssh-keys":
-            existing_ssh_keys = metadata_items[item_index].value.split("\n")
+    new_pub_key = username.strip() + ":" + pub_key.strip()
+    for _, metadata_item in enumerate(metadata_items):
+        if metadata_item.key == "ssh-keys":
+            existing_ssh_keys = metadata_item.value.split("\n")
 
-            # Check if the key already exists
+            # Check if the public key already exists
             need_append = True
-            for key_index in range(len(existing_ssh_keys)):
-                existing_ssh_keys[key_index] = existing_ssh_keys[key_index].strip()
-                if existing_ssh_keys[key_index] == new_key:
+            for _, key in enumerate(existing_ssh_keys):
+                key = key.strip()
+                if key == new_pub_key:
                     need_append = False
                     break
 
@@ -237,13 +240,13 @@ def add_server_pub_key(
 
             # Update the instance metadata with the new SSH key
             if need_append:
-                metadata_items[item_index].value = (
-                    existing_ssh_keys + "\n" + new_key
+                metadata_item.value = (
+                    existing_ssh_keys + "\n" + new_pub_key
                 )
             break
 
     if not existing_ssh_keys:
-        metadata_items.append(Items(key="ssh-keys", value=new_key))
+        metadata_items.append(Items(key="ssh-keys", value=new_pub_key))
 
     request = SetMetadataInstanceRequest(
         project=project_id,

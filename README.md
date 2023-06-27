@@ -1,7 +1,6 @@
 # Google Analytics 4 Data Import
 
-Automating regular data import to GA4
-
+Google Analytics 4 Data Import pipeline using Google Cloud Platform.
 
 ## Import source - BigQuery / Cloud Storage / SFTP
 
