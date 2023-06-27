@@ -63,5 +63,14 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["ga4_data_import"]
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+
+[[tool.pydoc-markdown.loaders]]
+type = "python"
+search_path = [ "./" ]
+[tool.pydoc-markdown.renderer]
+type = "markdown"
+filename = "./docs/index.md"
+render_toc = true
+[tool.pydoc-markdown.renderer.source_linker]
+type = "github"
+repo = "max-ostapenko/ga4_data_import"

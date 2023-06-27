@@ -1,6 +1,5 @@
 ipython
 ipykernel
-sphynx
 build
 google-cloud-compute
 google-cloud-resource-manager
