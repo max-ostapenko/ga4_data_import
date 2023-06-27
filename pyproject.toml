@@ -1,6 +1,6 @@
 [project]
 name = "ga4_data_import"
-version = "0.1.6"
+version = "0.1.60"
 description = "Google Analytics 4 Data Import pipeline"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -22,8 +22,6 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -74,8 +72,8 @@ type = "markdown"
 filename = "./docs/index.md"
 render_toc = true
 [tool.pydoc-markdown.renderer.source_linker]
-type = "github"
-repo = "max-ostapenko/ga4_data_import"
+type = "git"
+url_template = "https://github.com/max-ostapenko/ga4_data_import/blob/main/{path}#L{lineno}"
 
 [tool.pylint.main]
 disable = ["too-many-arguments"]
