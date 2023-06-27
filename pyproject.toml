@@ -1,6 +1,6 @@
 [project]
 name = "ga4_data_import"
-version = "0.1.56"
+version = "0.1.6"
 description = "Google Analytics 4 Data Import pipeline"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -51,10 +51,12 @@ test = [
     ]
 
 [project.urls]
-"Homepage" = "https://www.maxostapenko.com/projects/ga4_data_import"
-"Bug Reports" = "https://github.com/max-ostapenko/ga4_data_import/issues"
-"Funding" = "https://maxostapenko.com/sponsor"
 "Source" = "https://github.com/max-ostapenko/ga4_data_import/"
+"Modules Documentation" = "https://github.com/max-ostapenko/ga4_data_import/blob/main/docs/index.md"
+"Bug Reports" = "https://github.com/max-ostapenko/ga4_data_import/issues"
+"Blog Article" = "https://www.maxostapenko.com/projects/ga4_data_import"
+"Funding" = "https://maxostapenko.com/sponsor"
+
 
 [build-system]
 requires = ["setuptools>=43.0.0", "wheel"]
