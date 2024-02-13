@@ -1,6 +1,6 @@
 [project]
 name = "ga4_data_import"
-version = "0.1.60"
+version = "0.1.61"
 description = "Google Analytics 4 Data Import pipeline"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -35,7 +35,8 @@ dependencies = [
     "google-cloud-resource-manager",
     "google-cloud-storage",
     "google-cloud-workflows",
-    "google-cloud-scheduler"
+    "google-cloud-scheduler",
+    "google-cloud-core"
 ]
 
 [project.optional-dependencies]
@@ -52,9 +53,7 @@ test = [
 "Source" = "https://github.com/max-ostapenko/ga4_data_import/"
 "Modules Documentation" = "https://github.com/max-ostapenko/ga4_data_import/blob/main/docs/index.md"
 "Bug Reports" = "https://github.com/max-ostapenko/ga4_data_import/issues"
-"Blog Article" = "https://www.maxostapenko.com/projects/ga4_data_import"
-"Funding" = "https://maxostapenko.com/sponsor"
-
+"Project website" = "https://maxostapenko.com/projects/google_analytics_4_data_import/"
 
 [build-system]
 requires = ["setuptools>=43.0.0", "wheel"]
@@ -62,7 +61,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["ga4_data_import"]
-
 
 [[tool.pydoc-markdown.loaders]]
 type = "python"

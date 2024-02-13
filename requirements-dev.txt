@@ -1,0 +1,11 @@
+ipykernel
+build
+
+pydoc-markdown
+
+pylint
+black[jupyter]
+isort
+flake8
+mypy
+yamllint

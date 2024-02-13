@@ -4,17 +4,12 @@ Workflow deployment module to configure BigQuery export to Cloud Storage.
 
 import json
 
-from google.cloud.scheduler_v1.services.cloud_scheduler.client import (
-    CloudSchedulerClient,
-)
+from google.cloud.scheduler_v1.services.cloud_scheduler.client import \
+    CloudSchedulerClient
+from google.cloud.scheduler_v1.types import (CreateJobRequest, HttpMethod,
+                                             HttpTarget, Job)
 from google.cloud.workflows_v1.services.workflows.client import WorkflowsClient
-from google.cloud.scheduler_v1.types import (
-    Job,
-    HttpTarget,
-    HttpMethod,
-    CreateJobRequest,
-)
-from google.cloud.workflows_v1.types import Workflow, CreateWorkflowRequest
+from google.cloud.workflows_v1.types import CreateWorkflowRequest, Workflow
 
 
 def deploy_workflow(
@@ -120,7 +115,7 @@ def deploy_scheduler(
         schedule=schedule,
         time_zone="Etc/UTC",
         http_target=HttpTarget(
-            uri=f"https://workflowexecutions.googleapis.com/v1/projects/{project_id}/locations/{region}/workflows/{workflow_id}/executions", # pylint: disable=line-too-long
+            uri=f"https://workflowexecutions.googleapis.com/v1/projects/{project_id}/locations/{region}/workflows/{workflow_id}/executions",  # pylint: disable=line-too-long
             http_method=HttpMethod.POST,
             headers={
                 "Content-Type": "application/json",

@@ -1,9 +1,7 @@
 """Common functions for the GA4 Data Import API code samples."""
 
-from google.cloud.resourcemanager_v3 import (
-    ProjectsClient,
-    SearchProjectsRequest,
-)
+from google.cloud.resourcemanager_v3 import (ProjectsClient,
+                                             SearchProjectsRequest)
 
 
 def get_project_number(project_id: str):
