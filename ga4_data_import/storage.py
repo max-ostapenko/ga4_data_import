@@ -2,11 +2,14 @@
 This file contains functions for interacting with Google Cloud Storage.
 """
 
-from google.cloud.storage import Client as StorageClient
 from google.api_core import exceptions as core_exceptions
+from google.cloud.storage import Client as StorageClient  # type: ignore
 
 
-def create_bucket(bucket_name: str, region: str, ):
+def create_bucket(
+    bucket_name: str,
+    region: str,
+):
     """
     Create a new bucket with the provided name in the provided project.
 
@@ -42,9 +45,7 @@ def add_bucket_read_access(
     policy.bindings.append(
         {
             "role": "roles/storage.objectViewer",
-            "members": [
-                f"serviceAccount:{service_account_email}"
-            ],
+            "members": [f"serviceAccount:{service_account_email}"],
         }
     )
     bucket.set_iam_policy(policy)

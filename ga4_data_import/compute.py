@@ -2,31 +2,22 @@
 This file contains functions for creating a Compute Engine instance and static address.
 """
 
-from google.cloud.compute_v1.services.instances.client import InstancesClient
-from google.cloud.compute_v1.services.addresses.client import AddressesClient
-from google.cloud.compute_v1.types import (
-    Address,
-    AccessConfig,
-    AttachedDisk,
-    AttachedDiskInitializeParams,
-    InsertAddressRequest,
-    InsertInstanceRequest,
-    Instance,
-    Items,
-    GetAddressRequest,
-    Metadata,
-    NetworkInterface,
-    Scheduling,
-    ServiceAccount,
-    ShieldedInstanceConfig,
-    ShieldedInstanceIntegrityPolicy,
-    SetMetadataInstanceRequest,
-    Tags,
-)
 from google.api_core import exceptions as core_exceptions
-from ga4_data_import.common import (
-    get_project_number,
-)
+from google.cloud.compute_v1.services.addresses.client import AddressesClient
+from google.cloud.compute_v1.services.instances.client import InstancesClient
+from google.cloud.compute_v1.types import (AccessConfig, Address, AttachedDisk,
+                                           AttachedDiskInitializeParams,
+                                           GetAddressRequest,
+                                           InsertAddressRequest,
+                                           InsertInstanceRequest, Instance,
+                                           Items, Metadata, NetworkInterface,
+                                           Scheduling, ServiceAccount,
+                                           SetMetadataInstanceRequest,
+                                           ShieldedInstanceConfig,
+                                           ShieldedInstanceIntegrityPolicy,
+                                           Tags)
+
+from ga4_data_import.common import get_project_number
 
 
 def create_static_address(project_id: str, region: str, instance_name: str):
@@ -146,10 +137,11 @@ systemctl restart ssh""",
         ],
     )
 
-
     if not service_account_email:
         project_number = get_project_number(project_id)
-        service_account_email = f"{project_number}-compute@developer.gserviceaccount.com"
+        service_account_email = (
+            f"{project_number}-compute@developer.gserviceaccount.com"
+        )
     service_account = ServiceAccount(
         email=service_account_email,
         scopes=[
@@ -194,7 +186,9 @@ systemctl restart ssh""",
 
     # Create the instance
     InstancesClient().insert(request=insert_instance_request).result()
-    instance_response = InstancesClient().get(project=project_id, zone=zone, instance=instance_name)
+    instance_response = InstancesClient().get(
+        project=project_id, zone=zone, instance=instance_name
+    )
 
     return instance_response
 
@@ -226,23 +220,21 @@ def add_server_pub_key(
     new_pub_key = username.strip() + ":" + pub_key.strip()
     for _, metadata_item in enumerate(metadata_items):
         if metadata_item.key == "ssh-keys":
-            existing_ssh_keys = metadata_item.value.split("\n")
+            existing_ssh_keys_arr = metadata_item.value.split("\n")
 
             # Check if the public key already exists
             need_append = True
-            for _, key in enumerate(existing_ssh_keys):
+            for _, key in enumerate(existing_ssh_keys_arr):
                 key = key.strip()
                 if key == new_pub_key:
                     need_append = False
                     break
 
-            existing_ssh_keys = "\n".join(existing_ssh_keys)
+            existing_ssh_keys = "\n".join(existing_ssh_keys_arr)
 
             # Update the instance metadata with the new SSH key
             if need_append:
-                metadata_item.value = (
-                    existing_ssh_keys + "\n" + new_pub_key
-                )
+                metadata_item.value = existing_ssh_keys + "\n" + new_pub_key
             break
 
     if not existing_ssh_keys:
