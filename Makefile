@@ -1,21 +1,20 @@
 # Define variables
 VENV_NAME := .venv
 PYTHON := python3
-REQUIREMENTS := requirements.txt
 
 .PHONY: docs
 
 env:
 	$(PYTHON) -m venv $(VENV_NAME)
-	$(VENV_NAME)/bin/$(PYTHON) -m pip install -q -r $(REQUIREMENTS)
+	$(VENV_NAME)/bin/$(PYTHON) -m pip install -q -r requirements.txt
+	$(VENV_NAME)/bin/$(PYTHON) -m pip install -q -r requirements-dev.txt
 
 lint:
-	pip install pylint
-    pylint $(git ls-files '*.py')
+	pylint $(git ls-files '*.py')
 
 build:
-	pip install build
-    python -m build
+	make docs
+	python -m build
 
 docs:
 	pydoc-markdown

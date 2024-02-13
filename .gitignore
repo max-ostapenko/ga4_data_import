@@ -1,2 +1,6 @@
 .venv
 .DS_Store
+.venv
+.mypy_cache
+/dist/
+/ga4_data_import*/

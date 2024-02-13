@@ -1,0 +1,4 @@
+ipykernel
+build
+pylint
+pydoc-markdown

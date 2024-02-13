@@ -53,7 +53,7 @@ test = [
 "Source" = "https://github.com/max-ostapenko/ga4_data_import/"
 "Modules Documentation" = "https://github.com/max-ostapenko/ga4_data_import/blob/main/docs/index.md"
 "Bug Reports" = "https://github.com/max-ostapenko/ga4_data_import/issues"
-"Blog Article" = "https://maxostapenko.com/posts/google_analytics_4_data_import/"
+"Project website" = "https://maxostapenko.com/projects/google_analytics_4_data_import/"
 
 [build-system]
 requires = ["setuptools>=43.0.0", "wheel"]
