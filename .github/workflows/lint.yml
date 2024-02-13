@@ -1,0 +1,22 @@
+name: Lint
+
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: make env
+    - uses: super-linter/super-linter/slim@v6.0.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_GITHUB_ACTIONS: true
+        VALIDATE_MARKDOWN: true
+        VALIDATE_PYTHON_BLACK: true
+        VALIDATE_PYTHON_FLAKE8: true
+        VALIDATE_PYTHON_ISORT: true
+        VALIDATE_PYTHON_MYPY: true
+        VALIDATE_PYTHON_PYLINT: true
+        VALIDATE_YAML: true
+

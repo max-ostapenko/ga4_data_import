@@ -3,4 +3,4 @@
 .venv
 .mypy_cache
 /dist/
-/ga4_data_import*/
+/ga4_data_import.egg-info/
