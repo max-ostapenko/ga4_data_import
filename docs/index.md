@@ -34,7 +34,7 @@ Common functions for the GA4 Data Import API code samples.
 def get_project_number(project_id: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/common.py#L9)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/common.py#L7)
 
 Get the project number from the project id.
 
@@ -79,7 +79,7 @@ Create a new bucket with the provided name in the provided project.
 def add_bucket_read_access(bucket_name: str, service_account_email: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/storage.py#L28)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/storage.py#L31)
 
 Add read access to the bucket for the compute service account.
 
@@ -102,7 +102,7 @@ Workflow deployment module to configure BigQuery export to Cloud Storage.
 def deploy_workflow(project_id, region, workflow_id, service_account_email)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/workflow.py#L20)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/workflow.py#L15)
 
 Deploy a workflow to the project.
 
@@ -122,7 +122,7 @@ def deploy_scheduler(project_id, region, scheduler_id, service_account_email,
                      schedule, workflow_id, query, storage_path)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/workflow.py#L90)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/workflow.py#L85)
 
 Deploy a trigger to the project.
 
@@ -151,7 +151,7 @@ This file contains functions for creating a Compute Engine instance and static a
 def create_static_address(project_id: str, region: str, instance_name: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/compute.py#L32)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/compute.py#L23)
 
 Create a static address with the provided name, project id, and region.
 
@@ -180,7 +180,7 @@ def create_instance(instance_name: str,
                     service_account_email: str = "")
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/compute.py#L66)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/compute.py#L57)
 
 Create a Compute Engine instance with the provided name, project id, zone, and bucket name.
 
@@ -209,7 +209,7 @@ def add_server_pub_key(project_id: str, zone: str, instance_name: str,
                        pub_key: str, username: str)
 ```
 
-[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/compute.py#L202)
+[[view_source]](https://github.com/max-ostapenko/ga4_data_import/blob/main/ga4_data_import/compute.py#L196)
 
 Add the provided SSH public key to the instance metadata.
 
