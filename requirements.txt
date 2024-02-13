@@ -1,5 +1,3 @@
-ipython
-ipykernel
 google-cloud-compute
 google-cloud-resource-manager
 google-cloud-storage
