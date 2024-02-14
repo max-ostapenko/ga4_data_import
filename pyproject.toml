@@ -1,6 +1,6 @@
 [project]
 name = "ga4_data_import"
-version = "0.1.65"
+version = "0.1.66"
 description = "Google Analytics 4 Data Import pipeline"
 readme = "README.md"
 requires-python = ">=3.7"
